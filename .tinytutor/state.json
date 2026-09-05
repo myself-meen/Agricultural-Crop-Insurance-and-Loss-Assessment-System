@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "checkpointRef": "63992747d48cd34894785d67856f9aa39edc88c9",
+  "quizPending": false,
+  "milestoneCount": 0,
+  "memoryCountAtBlock": 0,
+  "pendingQuizDiff": null,
+  "denyCount": 0,
+  "config": {
+    "linesThreshold": 80,
+    "filesThreshold": 3,
+    "excludePatterns": [
+      "package-lock.json",
+      "pnpm-lock.yaml",
+      "yarn.lock"
+    ]
+  }
+}

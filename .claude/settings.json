@@ -1,0 +1,38 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx --yes tinytutor stop-hook",
+            "timeout": 600
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx --yes tinytutor pre-tool-use-hook",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx --yes tinytutor user-prompt-submit-hook",
+            "timeout": 20
+          }
+        ]
+      }
+    ]
+  }
+}

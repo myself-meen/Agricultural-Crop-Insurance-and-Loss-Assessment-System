@@ -1,7 +1,7 @@
 package com.examly.springapp.repository;
 
-import com.examly.springapp.model.SurveyAssignment;
-import com.examly.springapp.model.SurveyStatus;
+import com.examly.springapp.entity.SurveyAssignment;
+import com.examly.springapp.entity.SurveyStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -11,6 +11,6 @@ import java.util.Optional;
 @Repository
 public interface SurveyAssignmentRepository extends JpaRepository<SurveyAssignment, Long> {
     List<SurveyAssignment> findBySurveyorId(Long surveyorId);
-    List<SurveyAssignment> findBySurveyorIdAndStatus(Long surveyorId, SurveyStatus status);
     Optional<SurveyAssignment> findByNotificationId(Long notificationId);
+    List<SurveyAssignment> findByStatus(SurveyStatus status);
 }
