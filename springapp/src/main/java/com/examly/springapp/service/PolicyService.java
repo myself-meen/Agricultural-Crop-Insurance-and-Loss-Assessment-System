@@ -3,6 +3,7 @@ import com.examly.springapp.audit.AuditService;
 import com.examly.springapp.dto.PolicyDTO;
 import com.examly.springapp.entity.Policy;
 import com.examly.springapp.entity.PolicyStatus;
+import com.examly.springapp.entity.Season;
 import com.examly.springapp.entity.User;
 import com.examly.springapp.exception.ResourceNotFoundException;
 import com.examly.springapp.repository.PolicyRepository;
@@ -42,16 +43,35 @@ public class PolicyService {
         // PMFBY standard sum insured calculation: e.g. 50,000 INR per hectare
         BigDecimal sumInsured = dto.getSumInsured() != null ? dto.getSumInsured() :
                 dto.getSownAreaHa().multiply(new BigDecimal("50000.00"));
-        policy.setSumInsured(sumInsured);
+        policy.setSumInsured(sumInsured.setScale(2, RoundingMode.HALF_UP));
 
-        // PMFBY premium breakdown: Farmer pays 2%, State government 49%, Centre government 49%
-        BigDecimal farmerRate = new BigDecimal("0.02");
-        BigDecimal totalPremium = sumInsured.multiply(farmerRate);
-        policy.setPremiumFarmer(totalPremium.setScale(2, RoundingMode.HALF_UP));
+        // PMFBY season-based farmer premium rates:
+        // Kharif: 2.0%, Rabi: 1.5%, Zaid / Commercial: 5.0%
+        BigDecimal farmerRate;
+        if (policy.getSeason() == Season.KHARIF) {
+            farmerRate = new BigDecimal("0.02");
+        } else if (policy.getSeason() == Season.RABI) {
+            farmerRate = new BigDecimal("0.015");
+        } else {
+            farmerRate = new BigDecimal("0.05");
+        }
 
-        BigDecimal govtShareRate = new BigDecimal("0.49");
-        policy.setPremiumState(sumInsured.multiply(new BigDecimal("0.05")).multiply(govtShareRate).setScale(2, RoundingMode.HALF_UP));
-        policy.setPremiumCentre(sumInsured.multiply(new BigDecimal("0.05")).multiply(govtShareRate).setScale(2, RoundingMode.HALF_UP));
+        BigDecimal premiumFarmer = sumInsured.multiply(farmerRate).setScale(2, RoundingMode.HALF_UP);
+        policy.setPremiumFarmer(premiumFarmer);
+
+        // Total actuarial premium estimate: 10% of sum insured
+        BigDecimal totalActuarialPremium = sumInsured.multiply(new BigDecimal("0.10")).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal govtSubsidyTotal = totalActuarialPremium.subtract(premiumFarmer);
+        if (govtSubsidyTotal.compareTo(BigDecimal.ZERO) < 0) {
+            govtSubsidyTotal = BigDecimal.ZERO;
+        }
+
+        // 50% State Government share, 50% Central Government share
+        BigDecimal stateShare = govtSubsidyTotal.divide(new BigDecimal("2"), 2, RoundingMode.HALF_UP);
+        BigDecimal centreShare = govtSubsidyTotal.subtract(stateShare);
+
+        policy.setPremiumState(stateShare);
+        policy.setPremiumCentre(centreShare);
 
         policy.setStatus(PolicyStatus.ENROLLED);
         policy.setEnrollmentDate(LocalDate.now());
@@ -62,6 +82,22 @@ public class PolicyService {
                 "Enrolled policy for crop: " + saved.getCropName() + " with sum insured: " + saved.getSumInsured(), "127.0.0.1");
 
         return convertToDTO(saved);
+    }
+
+    public List<PolicyDTO> getPoliciesByStatus(PolicyStatus status) {
+        return policyRepository.findByStatus(status).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    public PolicyDTO updatePolicyStatus(Long id, PolicyStatus status) {
+        Policy policy = policyRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Policy not found with ID: " + id));
+        policy.setStatus(status);
+        Policy updated = policyRepository.save(policy);
+        auditService.logAction(policy.getFarmer().getId(), "POLICY_STATUS_UPDATED", "POLICY", id,
+                "Policy status changed to: " + status, "127.0.0.1");
+        return convertToDTO(updated);
     }
 
     public List<PolicyDTO> getPoliciesByFarmer(Long farmerId) {

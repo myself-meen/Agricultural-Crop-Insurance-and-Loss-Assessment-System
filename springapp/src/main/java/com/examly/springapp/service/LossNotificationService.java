@@ -54,6 +54,20 @@ public class LossNotificationService {
         return convertToDTO(saved);
     }
 
+    public List<LossNotificationDTO> getLossNotificationsByFarmer(Long farmerId) {
+        List<Policy> policies = policyRepository.findByFarmerId(farmerId);
+        return policies.stream()
+                .flatMap(p -> lossNotificationRepository.findByPolicyId(p.getId()).stream())
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    public List<LossNotificationDTO> getLossNotificationsByStatus(LossStatus status) {
+        return lossNotificationRepository.findByStatus(status).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
     public List<LossNotificationDTO> getLossNotificationsByPolicy(Long policyId) {
         return lossNotificationRepository.findByPolicyId(policyId).stream()
                 .map(this::convertToDTO)

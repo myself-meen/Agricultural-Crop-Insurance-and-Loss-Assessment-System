@@ -26,6 +26,16 @@ public class LossNotificationController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Loss notification reported successfully", response));
     }
 
+    @GetMapping("/farmer/{farmerId}")
+    public ResponseEntity<ApiResponse<List<LossNotificationDTO>>> getLossNotificationsByFarmer(@PathVariable Long farmerId) {
+        return ResponseEntity.ok(new ApiResponse<>(true, "Farmer loss notifications fetched successfully", lossNotificationService.getLossNotificationsByFarmer(farmerId)));
+    }
+
+    @GetMapping("/status/{status}")
+    public ResponseEntity<ApiResponse<List<LossNotificationDTO>>> getLossNotificationsByStatus(@PathVariable com.examly.springapp.entity.LossStatus status) {
+        return ResponseEntity.ok(new ApiResponse<>(true, "Loss notifications filtered by status", lossNotificationService.getLossNotificationsByStatus(status)));
+    }
+
     @GetMapping("/policy/{policyId}")
     public ResponseEntity<ApiResponse<List<LossNotificationDTO>>> getLossNotificationsByPolicy(@PathVariable Long policyId) {
         return ResponseEntity.ok(new ApiResponse<>(true, "Loss notifications fetched successfully", lossNotificationService.getLossNotificationsByPolicy(policyId)));

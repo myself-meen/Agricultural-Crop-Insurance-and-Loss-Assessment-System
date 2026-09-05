@@ -11,10 +11,12 @@ com\examly\springapp\controller\PolicyController.class
 com\examly\springapp\entity\LossStatus.class
 com\examly\springapp\controller\AuthController.class
 com\examly\springapp\exception\ErrorDetails.class
+com\examly\springapp\controller\AnalyticsController.class
 com\examly\springapp\repository\FarmerProfileRepository.class
 com\examly\springapp\exception\InvalidPhoneException.class
 com\examly\springapp\security\UserDetailsServiceImpl.class
 com\examly\springapp\audit\EncryptionUtil.class
+com\examly\springapp\dto\AnalyticsDTO.class
 com\examly\springapp\entity\Season.class
 com\examly\springapp\service\ClaimService.class
 com\examly\springapp\entity\AuditLog.class
@@ -45,6 +47,7 @@ com\examly\springapp\config\SecurityConfig.class
 com\examly\springapp\entity\SurveyStatus.class
 com\examly\springapp\repository\AuditLogRepository.class
 com\examly\springapp\entity\Claim.class
+com\examly\springapp\service\AnalyticsService.class
 com\examly\springapp\controller\ClaimController.class
 com\examly\springapp\entity\Policy.class
 com\examly\springapp\exception\ResourceNotFoundException.class

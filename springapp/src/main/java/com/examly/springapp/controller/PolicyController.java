@@ -37,8 +37,20 @@ public class PolicyController {
         return ResponseEntity.ok(new ApiResponse<>(true, "All policies fetched successfully", policyService.getAllPolicies()));
     }
 
+    @GetMapping("/status/{status}")
+    public ResponseEntity<ApiResponse<List<PolicyDTO>>> getPoliciesByStatus(@PathVariable com.examly.springapp.entity.PolicyStatus status) {
+        return ResponseEntity.ok(new ApiResponse<>(true, "Policies filtered by status", policyService.getPoliciesByStatus(status)));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<PolicyDTO>> getPolicyById(@PathVariable Long id) {
         return ResponseEntity.ok(new ApiResponse<>(true, "Policy fetched successfully", policyService.getPolicyById(id)));
+    }
+
+    @PutMapping("/{id}/status")
+    public ResponseEntity<ApiResponse<PolicyDTO>> updatePolicyStatus(
+            @PathVariable Long id,
+            @RequestParam com.examly.springapp.entity.PolicyStatus status) {
+        return ResponseEntity.ok(new ApiResponse<>(true, "Policy status updated successfully", policyService.updatePolicyStatus(id, status)));
     }
 }

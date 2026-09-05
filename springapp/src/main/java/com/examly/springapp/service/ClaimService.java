@@ -119,10 +119,42 @@ public class ClaimService {
                 "Disbursed INR " + claim.getApprovedAmount() + " via DBT. UTR: " + utr, "127.0.0.1");
         return convertToDTO(saved);
     }
+    public ClaimDTO rejectClaim(Long claimId, Long officerId, String remarks) {
+        Claim claim = claimRepository.findById(claimId)
+                .orElseThrow(() -> new ResourceNotFoundException("Claim not found with ID: " + claimId));
+
+        User officer = userRepository.findById(officerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Officer user not found with ID: " + officerId));
+
+        claim.setStatus(ClaimStatus.REJECTED);
+        if (remarks != null) claim.setRemarks(remarks);
+
+        Claim saved = claimRepository.save(claim);
+
+        auditService.logAction(officerId, "CLAIM_REJECTED", "CLAIM", saved.getId(),
+                "Claim ID: " + claimId + " rejected. Reason: " + remarks, "127.0.0.1");
+
+        return convertToDTO(saved);
+    }
+
+    public List<ClaimDTO> getClaimsByFarmer(Long farmerId) {
+        List<Policy> policies = policyRepository.findByFarmerId(farmerId);
+        return policies.stream()
+                .flatMap(p -> claimRepository.findByPolicyId(p.getId()).stream())
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    public List<ClaimDTO> getClaimsByStatus(ClaimStatus status) {
+        return claimRepository.findByStatus(status).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
     public List<ClaimDTO> getClaimsByPolicy(Long policyId) {
         return claimRepository.findByPolicyId(policyId).stream()
                 .map(this::convertToDTO)
-           .collect(Collectors.toList());
+                .collect(Collectors.toList());
     }
     public List<ClaimDTO> getAllClaims() {
         return claimRepository.findAll().stream()

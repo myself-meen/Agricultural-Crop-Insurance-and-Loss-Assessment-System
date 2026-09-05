@@ -1,0 +1,9 @@
+com\examly\springapp\service\UserServiceTest.class
+com\examly\springapp\service\FarmerProfileServiceTest.class
+com\examly\springapp\service\LossNotificationServiceTest.class
+com\examly\springapp\controller\PolicyControllerTest.class
+com\examly\springapp\service\SurveyAssignmentServiceTest.class
+com\examly\springapp\service\AnalyticsServiceTest.class
+com\examly\springapp\service\PolicyServiceTest.class
+com\examly\springapp\controller\AuthControllerTest.class
+com\examly\springapp\service\ClaimServiceTest.class

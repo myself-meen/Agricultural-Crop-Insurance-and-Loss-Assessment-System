@@ -57,6 +57,18 @@ public class SurveyAssignmentService {
         return convertToDTO(saved);
     }
 
+    public List<SurveyAssignmentDTO> getAssignmentsByStatus(SurveyStatus status) {
+        return surveyAssignmentRepository.findByStatus(status).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    public SurveyAssignmentDTO getAssignmentByNotificationId(Long notificationId) {
+        SurveyAssignment assignment = surveyAssignmentRepository.findByNotificationId(notificationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Survey assignment not found for notification ID: " + notificationId));
+        return convertToDTO(assignment);
+    }
+
     public List<SurveyAssignmentDTO> getAssignmentsBySurveyor(Long surveyorId) {
         return surveyAssignmentRepository.findBySurveyorId(surveyorId).stream()
                 .map(this::convertToDTO)

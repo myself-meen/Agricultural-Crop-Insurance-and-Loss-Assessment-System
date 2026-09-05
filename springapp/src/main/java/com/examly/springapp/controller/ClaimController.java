@@ -44,6 +44,25 @@ public class ClaimController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Direct Benefit Transfer payout disbursed", response));
     }
 
+    @PutMapping("/{id}/reject")
+    public ResponseEntity<ApiResponse<ClaimDTO>> rejectClaim(
+            @PathVariable Long id,
+            @RequestParam Long officerId,
+            @RequestParam(required = false) String remarks) {
+        ClaimDTO response = claimService.rejectClaim(id, officerId, remarks);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Claim rejected successfully", response));
+    }
+
+    @GetMapping("/farmer/{farmerId}")
+    public ResponseEntity<ApiResponse<List<ClaimDTO>>> getClaimsByFarmer(@PathVariable Long farmerId) {
+        return ResponseEntity.ok(new ApiResponse<>(true, "Farmer claims fetched successfully", claimService.getClaimsByFarmer(farmerId)));
+    }
+
+    @GetMapping("/status/{status}")
+    public ResponseEntity<ApiResponse<List<ClaimDTO>>> getClaimsByStatus(@PathVariable com.examly.springapp.entity.ClaimStatus status) {
+        return ResponseEntity.ok(new ApiResponse<>(true, "Claims filtered by status", claimService.getClaimsByStatus(status)));
+    }
+
     @GetMapping("/policy/{policyId}")
     public ResponseEntity<ApiResponse<List<ClaimDTO>>> getClaimsByPolicy(@PathVariable Long policyId) {
         return ResponseEntity.ok(new ApiResponse<>(true, "Policy claims fetched successfully", claimService.getClaimsByPolicy(policyId)));

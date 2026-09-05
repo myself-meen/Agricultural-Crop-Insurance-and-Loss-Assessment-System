@@ -36,6 +36,7 @@ D:\programming-projects\ad-project\springapp\src\main\java\com\examly\springapp\
 D:\programming-projects\ad-project\springapp\src\main\java\com\examly\springapp\config\SwaggerConfig.java
 D:\programming-projects\ad-project\springapp\src\main\java\com\examly\springapp\entity\Role.java
 D:\programming-projects\ad-project\springapp\src\main\java\com\examly\springapp\dto\AuthResponse.java
+D:\programming-projects\ad-project\springapp\src\main\java\com\examly\springapp\service\AnalyticsService.java
 D:\programming-projects\ad-project\springapp\src\main\java\com\examly\springapp\exception\InvalidNameException.java
 D:\programming-projects\ad-project\springapp\src\main\java\com\examly\springapp\entity\Claim.java
 D:\programming-projects\ad-project\springapp\src\main\java\com\examly\springapp\repository\ClaimRepository.java
@@ -44,6 +45,7 @@ D:\programming-projects\ad-project\springapp\src\main\java\com\examly\springapp\
 D:\programming-projects\ad-project\springapp\src\main\java\com\examly\springapp\exception\GlobalExceptionHandler.java
 D:\programming-projects\ad-project\springapp\src\main\java\com\examly\springapp\repository\LossNotificationRepository.java
 D:\programming-projects\ad-project\springapp\src\main\java\com\examly\springapp\controller\SurveyAssignmentController.java
+D:\programming-projects\ad-project\springapp\src\main\java\com\examly\springapp\dto\AnalyticsDTO.java
 D:\programming-projects\ad-project\springapp\src\main\java\com\examly\springapp\dto\PolicyDTO.java
 D:\programming-projects\ad-project\springapp\src\main\java\com\examly\springapp\security\JwtAuthFilter.java
 D:\programming-projects\ad-project\springapp\src\main\java\com\examly\springapp\repository\UserRepository.java
@@ -52,6 +54,7 @@ D:\programming-projects\ad-project\springapp\src\main\java\com\examly\springapp\
 D:\programming-projects\ad-project\springapp\src\main\java\com\examly\springapp\dto\FarmerProfileDTO.java
 D:\programming-projects\ad-project\springapp\src\main\java\com\examly\springapp\controller\ClaimController.java
 D:\programming-projects\ad-project\springapp\src\main\java\com\examly\springapp\dto\LossNotificationDTO.java
+D:\programming-projects\ad-project\springapp\src\main\java\com\examly\springapp\controller\AnalyticsController.java
 D:\programming-projects\ad-project\springapp\src\main\java\com\examly\springapp\entity\FarmerProfile.java
 D:\programming-projects\ad-project\springapp\src\main\java\com\examly\springapp\security\UserDetailsServiceImpl.java
 D:\programming-projects\ad-project\springapp\src\main\java\com\examly\springapp\controller\LossNotificationController.java

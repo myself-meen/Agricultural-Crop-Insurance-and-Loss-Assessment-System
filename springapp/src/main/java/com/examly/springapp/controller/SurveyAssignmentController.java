@@ -35,6 +35,16 @@ public class SurveyAssignmentController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Survey results submitted successfully", response));
     }
 
+    @GetMapping("/status/{status}")
+    public ResponseEntity<ApiResponse<List<SurveyAssignmentDTO>>> getAssignmentsByStatus(@PathVariable com.examly.springapp.entity.SurveyStatus status) {
+        return ResponseEntity.ok(new ApiResponse<>(true, "Survey assignments filtered by status", surveyAssignmentService.getAssignmentsByStatus(status)));
+    }
+
+    @GetMapping("/notification/{notificationId}")
+    public ResponseEntity<ApiResponse<SurveyAssignmentDTO>> getAssignmentByNotificationId(@PathVariable Long notificationId) {
+        return ResponseEntity.ok(new ApiResponse<>(true, "Survey assignment fetched by notification ID", surveyAssignmentService.getAssignmentByNotificationId(notificationId)));
+    }
+
     @GetMapping("/surveyor/{surveyorId}")
     public ResponseEntity<ApiResponse<List<SurveyAssignmentDTO>>> getAssignmentsBySurveyor(@PathVariable Long surveyorId) {
         return ResponseEntity.ok(new ApiResponse<>(true, "Assignments fetched successfully", surveyAssignmentService.getAssignmentsBySurveyor(surveyorId)));

@@ -35,10 +35,10 @@ public class UserService {
             throw new InvalidPhoneException("Phone number must be exactly 10 digits");
         }
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email is already registered");
+            throw new IllegalArgumentException("Email is already registered");
         }
         if (userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
-            throw new RuntimeException("Phone number is already registered");
+            throw new IllegalArgumentException("Phone number is already registered");
         }
 
         User user = new User();
@@ -60,10 +60,14 @@ public class UserService {
     public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getIdentifier())
                 .orElseGet(() -> userRepository.findByPhoneNumber(request.getIdentifier())
-                        .orElseThrow(() -> new ResourceNotFoundException("Invalid credentials")));
+                        .orElseThrow(() -> new org.springframework.security.authentication.BadCredentialsException("Invalid credentials")));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-            throw new RuntimeException("Invalid credentials");
+            throw new org.springframework.security.authentication.BadCredentialsException("Invalid credentials");
+        }
+
+        if (Boolean.FALSE.equals(user.getIsActive())) {
+            throw new IllegalArgumentException("Account is inactive. Please contact system administrator.");
         }
 
         user.setLastLogin(LocalDateTime.now());
@@ -93,6 +97,42 @@ public class UserService {
         return userRepository.findByRole(role).stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
+    }
+
+    public UserDTO updateUser(Long id, UserDTO dto) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + id));
+
+        if (dto.getName() != null) {
+            if (!dto.getName().matches("^[a-zA-Z\\s]+$")) {
+                throw new InvalidNameException("Name must contain alphabets and spaces only");
+            }
+            user.setName(dto.getName());
+        }
+        if (dto.getPhoneNumber() != null) {
+            if (!dto.getPhoneNumber().matches("^\\d{10}$")) {
+                throw new InvalidPhoneException("Phone number must be exactly 10 digits");
+            }
+            user.setPhoneNumber(dto.getPhoneNumber());
+        }
+        if (dto.getRole() != null) {
+            user.setRole(dto.getRole());
+        }
+        if (dto.getIsActive() != null) {
+            user.setIsActive(dto.getIsActive());
+        }
+
+        User updated = userRepository.save(user);
+        auditService.logAction(id, "USER_UPDATED", "USER", id, "Updated user details", "127.0.0.1");
+        return convertToDTO(updated);
+    }
+
+    public void deleteUser(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + id));
+        user.setIsActive(false);
+        userRepository.save(user);
+        auditService.logAction(id, "USER_DEACTIVATED", "USER", id, "Deactivated user account", "127.0.0.1");
     }
 
     public UserDTO convertToDTO(User user) {
