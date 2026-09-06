@@ -2,19 +2,20 @@ package com.examly.springapp.service;
 
 import com.examly.springapp.audit.AuditService;
 import com.examly.springapp.dto.LossNotificationDTO;
-import com.examly.springapp.entity.LossNotification;
-import com.examly.springapp.entity.LossStatus;
-import com.examly.springapp.entity.Policy;
-import com.examly.springapp.entity.PolicyStatus;
+import com.examly.springapp.entity.*;
 import com.examly.springapp.exception.ResourceNotFoundException;
 import com.examly.springapp.repository.LossNotificationRepository;
 import com.examly.springapp.repository.PolicyRepository;
+import com.examly.springapp.repository.SurveyAssignmentRepository;
+import com.examly.springapp.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,6 +24,8 @@ public class LossNotificationService {
 
     private final LossNotificationRepository lossNotificationRepository;
     private final PolicyRepository policyRepository;
+    private final SurveyAssignmentRepository surveyAssignmentRepository;
+    private final UserRepository userRepository;
     private final AuditService auditService;
 
     public LossNotificationDTO reportLoss(Long policyId, LossNotificationDTO dto) {
@@ -32,11 +35,12 @@ public class LossNotificationService {
         LossNotification notification = new LossNotification();
         notification.setPolicy(policy);
         notification.setLossType(dto.getLossType());
-        notification.setAffectedAreaHa(dto.getAffectedAreaHa());
+        notification.setAffectedAreaHa(dto.getAffectedAreaHa() != null ? dto.getAffectedAreaHa() : policy.getSownAreaHa());
         notification.setLossDate(dto.getLossDate() != null ? dto.getLossDate() : LocalDateTime.now());
         notification.setNotificationDate(LocalDateTime.now());
-        notification.setGeoLat(dto.getGeoLat());
-        notification.setGeoLng(dto.getGeoLng());
+        notification.setGeoLat(dto.getGeoLat() != null ? dto.getGeoLat() : new BigDecimal("23.259933"));
+        notification.setGeoLng(dto.getGeoLng() != null ? dto.getGeoLng() : new BigDecimal("77.412615"));
+
         // Mock satellite NDVI calculation if not provided
         notification.setSatelliteNdviScore(dto.getSatelliteNdviScore() != null ? dto.getSatelliteNdviScore() : new BigDecimal("0.42"));
         notification.setPhotoUrls(dto.getPhotoUrls() != null ? dto.getPhotoUrls() : "[]");
@@ -47,6 +51,25 @@ public class LossNotificationService {
         // Update policy status to CLAIM_FILED
         policy.setStatus(PolicyStatus.CLAIM_FILED);
         policyRepository.save(policy);
+
+        // Seamless lifecycle integration: Automatically assign an accredited field surveyor
+        // so the loss is immediately visible in the surveyor's active inspection queue!
+        List<User> surveyors = userRepository.findByRole(Role.SURVEYOR);
+        if (!surveyors.isEmpty()) {
+            User assignedSurveyor = surveyors.stream()
+                    .filter(s -> "surveyor@assess.gov.in".equalsIgnoreCase(s.getEmail()))
+                    .findFirst()
+                    .orElse(surveyors.get(0));
+            SurveyAssignment survey = new SurveyAssignment();
+            survey.setNotification(saved);
+            survey.setSurveyor(assignedSurveyor);
+            survey.setSurveyDate(LocalDate.now().plusDays(2));
+            survey.setStatus(SurveyStatus.ASSIGNED);
+            surveyAssignmentRepository.save(survey);
+
+            saved.setStatus(LossStatus.SURVEYOR_ASSIGNED);
+            saved = lossNotificationRepository.save(saved);
+        }
 
         auditService.logAction(policy.getFarmer().getId(), "LOSS_NOTIFICATION_SUBMITTED", "LOSS_NOTIFICATION", saved.getId(),
                 "Reported loss of type: " + saved.getLossType() + " for policy ID: " + policyId, "127.0.0.1");
@@ -89,7 +112,16 @@ public class LossNotificationService {
     public LossNotificationDTO convertToDTO(LossNotification notification) {
         LossNotificationDTO dto = new LossNotificationDTO();
         dto.setId(notification.getId());
-        dto.setPolicyId(notification.getPolicy().getId());
+        if (notification.getPolicy() != null) {
+            dto.setPolicyId(notification.getPolicy().getId());
+            dto.setCropName(notification.getPolicy().getCropName());
+            dto.setDistrict(notification.getPolicy().getDistrict());
+            dto.setState(notification.getPolicy().getState());
+            if (notification.getPolicy().getFarmer() != null) {
+                dto.setFarmerId(notification.getPolicy().getFarmer().getId());
+                dto.setFarmerName(notification.getPolicy().getFarmer().getName());
+            }
+        }
         dto.setLossType(notification.getLossType());
         dto.setAffectedAreaHa(notification.getAffectedAreaHa());
         dto.setLossDate(notification.getLossDate());
@@ -99,6 +131,16 @@ public class LossNotificationService {
         dto.setSatelliteNdviScore(notification.getSatelliteNdviScore());
         dto.setPhotoUrls(notification.getPhotoUrls());
         dto.setStatus(notification.getStatus());
+
+        // Check if there is an associated survey assignment
+        try {
+            surveyAssignmentRepository.findByNotificationId(notification.getId()).ifPresent(survey -> {
+                dto.setSurveyId(survey.getId());
+                dto.setSurveyStatus(survey.getStatus().name());
+                dto.setLossAssessedPct(survey.getLossAssessedPct());
+            });
+        } catch (Exception ignored) {}
+
         return dto;
     }
 }

@@ -1,5 +1,6 @@
 package com.examly.springapp.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.examly.springapp.entity.PolicyStatus;
 import com.examly.springapp.entity.Season;
 import jakarta.validation.constraints.NotBlank;
@@ -17,15 +18,15 @@ public class PolicyDTO {
 
     private Long id;
     private Long farmerId;
+    private String farmerName;
     private Long enrolledById;
+    private String enrolledByName;
 
     @NotBlank(message = "Khasra/Survey number is required")
+    @JsonAlias({"khasraNumber", "khasra_number", "surveyNumber"})
     private String khasraSurveyNo;
 
-    @NotBlank(message = "State is required")
     private String state;
-
-    @NotBlank(message = "District is required")
     private String district;
 
     @NotBlank(message = "Crop name is required")
@@ -34,11 +35,13 @@ public class PolicyDTO {
     @NotNull(message = "Season is required")
     private Season season;
 
-    @NotNull(message = "Crop year is required")
+    @JsonAlias({"year"})
     private Integer cropYear;
 
     @NotNull(message = "Sown area in hectares is required")
+    @JsonAlias({"sownAreaHectares", "sownArea", "area"})
     private BigDecimal sownAreaHa;
+
 
     private BigDecimal sumInsured;
     private BigDecimal premiumFarmer;

@@ -3,6 +3,7 @@ import com.examly.springapp.audit.AuditService;
 import com.examly.springapp.dto.SurveyAssignmentDTO;
 import com.examly.springapp.entity.*;
 import com.examly.springapp.exception.ResourceNotFoundException;
+import com.examly.springapp.repository.ClaimRepository;
 import com.examly.springapp.repository.LossNotificationRepository;
 import com.examly.springapp.repository.SurveyAssignmentRepository;
 import com.examly.springapp.repository.UserRepository;
@@ -17,16 +18,21 @@ public class SurveyAssignmentService {
     private final SurveyAssignmentRepository surveyAssignmentRepository;
     private final LossNotificationRepository lossNotificationRepository;
     private final UserRepository userRepository;
+    private final ClaimRepository claimRepository;
+    private final ClaimService claimService;
     private final AuditService auditService;
     public SurveyAssignmentDTO assignSurveyor(Long notificationId, Long surveyorId, SurveyAssignmentDTO dto) {
         LossNotification notification = lossNotificationRepository.findById(notificationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Loss notification not found with ID: " + notificationId));
         User surveyor = userRepository.findById(surveyorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Surveyor user not found with ID: " + surveyorId));
-        SurveyAssignment assignment = new SurveyAssignment();
+
+        SurveyAssignment assignment = surveyAssignmentRepository.findByNotificationId(notificationId)
+                .orElse(new SurveyAssignment());
+
         assignment.setNotification(notification);
         assignment.setSurveyor(surveyor);
-        assignment.setSurveyDate(dto.getSurveyDate());
+        assignment.setSurveyDate(dto != null && dto.getSurveyDate() != null ? dto.getSurveyDate() : java.time.LocalDate.now().plusDays(2));
         assignment.setStatus(SurveyStatus.ASSIGNED);
         SurveyAssignment saved = surveyAssignmentRepository.save(assignment);
         notification.setStatus(LossStatus.SURVEYOR_ASSIGNED);
@@ -54,6 +60,32 @@ public class SurveyAssignmentService {
         auditService.logAction(assignment.getSurveyor().getId(), "SURVEY_SUBMITTED", "SURVEY_ASSIGNMENT", saved.getId(),
                 "Submitted ground survey results with loss %: " + saved.getLossAssessedPct(), "127.0.0.1");
 
+        // Automatically initiate claim so it flows directly to the claim settlement pipeline
+        try {
+            if (claimRepository.findBySurveyId(saved.getId()).isEmpty()) {
+                claimService.initiateClaim(saved.getId());
+            }
+        } catch (Exception e) {
+            System.err.println("Claim auto-initiate info: " + e.getMessage());
+        }
+
+        return convertToDTO(saved);
+    }
+
+    public SurveyAssignmentDTO updateStatus(Long id, SurveyStatus status) {
+        SurveyAssignment assignment = surveyAssignmentRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Survey assignment not found with ID: " + id));
+        assignment.setStatus(status);
+        if (status == SurveyStatus.SUBMITTED || status == SurveyStatus.VERIFIED) {
+            assignment.setSurveyCompletedAt(LocalDateTime.now());
+            if (assignment.getNotification() != null) {
+                assignment.getNotification().setStatus(LossStatus.SURVEYED);
+                lossNotificationRepository.save(assignment.getNotification());
+            }
+        }
+        SurveyAssignment saved = surveyAssignmentRepository.save(assignment);
+        auditService.logAction(assignment.getSurveyor().getId(), "SURVEY_STATUS_UPDATED", "SURVEY_ASSIGNMENT", saved.getId(),
+                "Survey status updated to: " + status, "127.0.0.1");
         return convertToDTO(saved);
     }
 
@@ -97,6 +129,21 @@ public class SurveyAssignmentService {
         dto.setLossAssessedPct(assignment.getLossAssessedPct());
         dto.setSurveyPhotos(assignment.getSurveyPhotos());
         dto.setStatus(assignment.getStatus());
+        if (assignment.getNotification() != null) {
+            LossNotification notif = assignment.getNotification();
+            dto.setLossType(notif.getLossType() != null ? notif.getLossType().name() : null);
+            if (notif.getPolicy() != null) {
+                Policy pol = notif.getPolicy();
+                dto.setCropName(pol.getCropName());
+                dto.setDistrict(pol.getDistrict());
+                if (pol.getFarmer() != null) {
+                    dto.setFarmerName(pol.getFarmer().getName());
+                }
+            }
+        }
+        if (assignment.getSurveyor() != null) {
+            dto.setSurveyorName(assignment.getSurveyor().getName());
+        }
         return dto;
     }
 }

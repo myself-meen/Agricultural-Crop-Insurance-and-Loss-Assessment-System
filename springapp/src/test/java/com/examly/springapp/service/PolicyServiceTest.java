@@ -82,6 +82,7 @@ public class PolicyServiceTest {
     @Test
     void testEnrollPolicyKharif() {
         when(userRepository.findById(1L)).thenReturn(Optional.of(farmer));
+        when(policyRepository.existsByFarmerIdAndKhasraSurveyNoAndCropNameAndSeasonAndCropYear(any(), any(), any(), any(), any())).thenReturn(false);
         when(policyRepository.save(any(Policy.class))).thenReturn(savedPolicy);
 
         PolicyDTO result = policyService.enrollPolicy(1L, policyDTO, null);
@@ -92,6 +93,15 @@ public class PolicyServiceTest {
         assertEquals(Season.KHARIF, result.getSeason());
         verify(policyRepository, times(1)).save(any(Policy.class));
     }
+
+    @Test
+    void testEnrollDuplicatePolicyThrowsException() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(farmer));
+        when(policyRepository.existsByFarmerIdAndKhasraSurveyNoAndCropNameAndSeasonAndCropYear(any(), any(), any(), any(), any())).thenReturn(true);
+
+        assertThrows(IllegalArgumentException.class, () -> policyService.enrollPolicy(1L, policyDTO, null));
+    }
+
 
     @Test
     void testEnrollPolicyFarmerNotFound() {

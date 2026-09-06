@@ -33,6 +33,9 @@ public class ClaimServiceTest {
     private SurveyAssignmentRepository surveyAssignmentRepository;
 
     @Mock
+    private LossNotificationRepository lossNotificationRepository;
+
+    @Mock
     private FarmerProfileRepository farmerProfileRepository;
 
     @Mock
@@ -43,6 +46,7 @@ public class ClaimServiceTest {
 
     @InjectMocks
     private ClaimService claimService;
+
 
     private User farmer;
     private User officer;

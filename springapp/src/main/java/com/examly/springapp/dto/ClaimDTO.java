@@ -35,4 +35,15 @@ public class ClaimDTO {
     private LocalDate disbursedDate;
     private String remarks;
     private ClaimStatus status;
+
+    // Contextual fields for frontend display
+    private Long farmerId;
+    private String farmerName;
+    private String cropName;
+    private String district;
+    private String season;
+    private BigDecimal sumInsured;
+    private BigDecimal lossAssessedPct;
+    private String claimNumber;
+    private Long lossNotificationId;
 }

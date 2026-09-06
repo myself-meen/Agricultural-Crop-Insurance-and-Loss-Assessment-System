@@ -1,6 +1,8 @@
 node_modules/
 dist/
 build/
+target/
+**/target/
 .cache/
 .env*
 .vite/
@@ -9,3 +11,5 @@ vite.config.*.timestamp-*
 *-debug.log*
 .claude-replay.*
 .tmp-*
+.idea/
+*.class

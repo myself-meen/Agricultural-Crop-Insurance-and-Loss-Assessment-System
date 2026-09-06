@@ -18,6 +18,17 @@ public class LossNotificationController {
 
     private final LossNotificationService lossNotificationService;
 
+    @PostMapping
+    public ResponseEntity<ApiResponse<LossNotificationDTO>> reportLossDirect(
+            @Valid @RequestBody LossNotificationDTO dto) {
+        Long policyId = dto.getPolicyId();
+        if (policyId == null) {
+            throw new IllegalArgumentException("policyId is required in request body");
+        }
+        LossNotificationDTO response = lossNotificationService.reportLoss(policyId, dto);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Loss notification reported successfully", response));
+    }
+
     @PostMapping("/policy/{policyId}")
     public ResponseEntity<ApiResponse<LossNotificationDTO>> reportLoss(
             @PathVariable Long policyId,

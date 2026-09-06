@@ -198,7 +198,10 @@ erDiagram
 | `geo_lng` | `DECIMAL(11,8)` | `NOT NULL` | GPS Longitude Coordinate captured on-site |
 | `satellite_ndvi_score` | `DECIMAL(3,2)` | `NULL` | Satellite mock NDVI health score (0.00 to 1.00) for cross-verification |
 | `photo_urls` | `JSON` | `NOT NULL` | Array of geotagged crop damage photo URLs |
-| `status` | `ENUM` | `NOT NULL` | `SUBMITTED`, `SURVEYOR_ASSIGNED`, `SURVEYED` |
+| `status` | `ENUM` | `NOT NULL` | `SUBMITTED`, `SURVEYOR_ASSIGNED`, `SURVEYED`, `SETTLED`, `REJECTED` |
+
+> **Lifecycle Terminal States:** `SUBMITTED` -> `SURVEYOR_ASSIGNED` -> `SURVEYED` -> `SETTLED` (upon DBT transfer) or `REJECTED` (if claim rejected).
+
 
 ---
 
@@ -322,3 +325,9 @@ CREATE INDEX idx_audit_user_timestamp ON audit_logs(user_id, timestamp);
 1. **Aadhaar Protection:** Aadhaar numbers (`aadhaar_number`) are validated via 12-digit regex and stored using AES-256 field-level encryption at rest in `farmer_profiles`.
 2. **DBT Bank Account Validation:** Bank account numbers and IFSC codes are checked against standard RBI IFSC regex (`^[A-Z]{4}0[A-Z0-9]{6}$`) before saving.
 3. **Audit Trail Logging:** Every status change and sensitive operation (registration, policy creation, survey submission, claim approval L1/L2, DBT payment) automatically inserts an immutable row into `audit_logs`.
+4. **Self-Registration Role Hardening:** The public registration endpoint (`POST /api/auth/register`) strictly permits only the `FARMER` role. Any attempt to self-register as `ADMIN`, `INSURER`, `STATE_OFFICER`, or `SURVEYOR` is rejected with `403 Forbidden` (`UnauthorisedAccessException`). Administrative accounts must be provisioned by System Administrators via `POST /api/users`.
+5. **Duplicate Policy Enrollment Prevention:** A database uniqueness rule prevents a farmer from enrolling the same Khasra survey number for the same crop, season, and crop year (`existsByFarmerIdAndKhasraSurveyNoAndCropNameAndSeasonAndCropYear`).
+6. **Two-Level Claim Approval Pipeline:** Claims follow a rigid two-tier verification: `INITIATED` -> `UNDER_REVIEW` -> `LEVEL1_APPROVED` (Actuarial/Survey verification by Level 1 Officer) -> `APPROVED` (Financial sign-off by Senior Officer) -> `PAID` (Direct Benefit Transfer with UTR), or `REJECTED`.
+7. **Session Management & Inactivity SLA:** Stateless JWT token TTL is 8 hours for operational field shifts, with an enforced client-side 30-minute idle session timeout.
+8. **Standards Compliance:** Structured in accordance with **ISO/IEC/IEEE 29148:2018** (superseding IEEE Std 830-1998) and PMFBY Revamped Guidelines (2023–2026).
+

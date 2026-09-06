@@ -6,6 +6,8 @@ import com.examly.springapp.entity.*;
 import com.examly.springapp.exception.ResourceNotFoundException;
 import com.examly.springapp.repository.LossNotificationRepository;
 import com.examly.springapp.repository.PolicyRepository;
+import com.examly.springapp.repository.SurveyAssignmentRepository;
+import com.examly.springapp.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,6 +32,12 @@ public class LossNotificationServiceTest {
 
     @Mock
     private PolicyRepository policyRepository;
+
+    @Mock
+    private SurveyAssignmentRepository surveyAssignmentRepository;
+
+    @Mock
+    private UserRepository userRepository;
 
     @Mock
     private AuditService auditService;

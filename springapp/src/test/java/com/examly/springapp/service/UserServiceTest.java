@@ -107,6 +107,15 @@ public class UserServiceTest {
     }
 
     @Test
+    void testRegisterAdminRoleThrowsUnauthorisedException() {
+        RegisterRequest adminReq = new RegisterRequest("Attacker", "9876543210", "attacker@evil.in", "Password@123", Role.ADMIN);
+        when(userRepository.existsByEmail("attacker@evil.in")).thenReturn(false);
+        when(userRepository.existsByPhoneNumber("9876543210")).thenReturn(false);
+        assertThrows(com.examly.springapp.exception.UnauthorisedAccessException.class, () -> userService.register(adminReq));
+    }
+
+
+    @Test
     void testLoginSuccess() {
         LoginRequest loginRequest = new LoginRequest("ramesh@farmer.in", "Password@123");
         when(userRepository.findByEmail("ramesh@farmer.in")).thenReturn(Optional.of(testUser));

@@ -29,15 +29,23 @@ public class PolicyService {
 
         User enrolledBy = enrolledById != null ? userRepository.findById(enrolledById).orElse(null) : farmer;
 
+        if (dto.getKhasraSurveyNo() != null && policyRepository.existsByFarmerIdAndKhasraSurveyNoAndCropNameAndSeasonAndCropYear(
+                farmerId, dto.getKhasraSurveyNo(), dto.getCropName(), dto.getSeason(), dto.getCropYear())) {
+            throw new IllegalArgumentException("A policy for this land plot (Khasra: " + dto.getKhasraSurveyNo() +
+                    "), crop (" + dto.getCropName() + "), and season (" + dto.getSeason() + " " + dto.getCropYear() + ") is already enrolled.");
+        }
+
         Policy policy = new Policy();
+
         policy.setFarmer(farmer);
         policy.setEnrolledBy(enrolledBy);
         policy.setKhasraSurveyNo(dto.getKhasraSurveyNo());
-        policy.setState(dto.getState());
-        policy.setDistrict(dto.getDistrict());
+        policy.setState(dto.getState() != null ? dto.getState() : "Maharashtra");
+        policy.setDistrict(dto.getDistrict() != null ? dto.getDistrict() : "Nashik");
         policy.setCropName(dto.getCropName());
         policy.setSeason(dto.getSeason());
-        policy.setCropYear(dto.getCropYear());
+        policy.setCropYear(dto.getCropYear() != null ? dto.getCropYear() : LocalDate.now().getYear());
+
         policy.setSownAreaHa(dto.getSownAreaHa());
 
         // PMFBY standard sum insured calculation: e.g. 50,000 INR per hectare
@@ -121,9 +129,13 @@ public class PolicyService {
     public PolicyDTO convertToDTO(Policy policy) {
         PolicyDTO dto = new PolicyDTO();
         dto.setId(policy.getId());
-        dto.setFarmerId(policy.getFarmer().getId());
+        if (policy.getFarmer() != null) {
+            dto.setFarmerId(policy.getFarmer().getId());
+            dto.setFarmerName(policy.getFarmer().getName());
+        }
         if (policy.getEnrolledBy() != null) {
             dto.setEnrolledById(policy.getEnrolledBy().getId());
+            dto.setEnrolledByName(policy.getEnrolledBy().getName());
         }
         dto.setKhasraSurveyNo(policy.getKhasraSurveyNo());
         dto.setState(policy.getState());

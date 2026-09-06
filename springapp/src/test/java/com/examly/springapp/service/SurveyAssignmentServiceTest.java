@@ -37,6 +37,12 @@ public class SurveyAssignmentServiceTest {
     private UserRepository userRepository;
 
     @Mock
+    private com.examly.springapp.repository.ClaimRepository claimRepository;
+
+    @Mock
+    private ClaimService claimService;
+
+    @Mock
     private AuditService auditService;
 
     @InjectMocks

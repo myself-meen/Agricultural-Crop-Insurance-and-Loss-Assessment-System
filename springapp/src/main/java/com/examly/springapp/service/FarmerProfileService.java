@@ -11,6 +11,8 @@ import com.examly.springapp.repository.FarmerProfileRepository;
 import com.examly.springapp.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -47,6 +49,12 @@ public class FarmerProfileService {
                 "Farmer KYC profile created/updated", "127.0.0.1");
 
         return convertToDTO(saved);
+    }
+
+    public List<FarmerProfileDTO> getAllProfiles() {
+        return farmerProfileRepository.findAll().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
 
     public FarmerProfileDTO getProfileByUserId(Long userId) {

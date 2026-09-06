@@ -20,11 +20,24 @@ public class SurveyAssignmentController {
 
     @PostMapping("/assign")
     public ResponseEntity<ApiResponse<SurveyAssignmentDTO>> assignSurveyor(
-            @RequestParam Long notificationId,
-            @RequestParam Long surveyorId,
-            @RequestBody SurveyAssignmentDTO dto) {
-        SurveyAssignmentDTO response = surveyAssignmentService.assignSurveyor(notificationId, surveyorId, dto);
+            @RequestParam(required = false) Long notificationId,
+            @RequestParam(required = false) Long surveyorId,
+            @RequestBody(required = false) SurveyAssignmentDTO dto) {
+        Long notifId = notificationId != null ? notificationId : (dto != null ? dto.getNotificationId() : null);
+        Long survId = surveyorId != null ? surveyorId : (dto != null ? dto.getSurveyorId() : null);
+        if (notifId == null || survId == null) {
+            throw new IllegalArgumentException("Both notificationId and surveyorId are required to assign a surveyor");
+        }
+        SurveyAssignmentDTO response = surveyAssignmentService.assignSurveyor(notifId, survId, dto != null ? dto : new SurveyAssignmentDTO());
         return ResponseEntity.ok(new ApiResponse<>(true, "Surveyor assigned successfully", response));
+    }
+
+    @PutMapping("/{id}/status")
+    public ResponseEntity<ApiResponse<SurveyAssignmentDTO>> updateStatus(
+            @PathVariable Long id,
+            @RequestParam com.examly.springapp.entity.SurveyStatus status) {
+        SurveyAssignmentDTO response = surveyAssignmentService.updateStatus(id, status);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Survey status updated successfully", response));
     }
 
     @PutMapping("/{id}/submit")

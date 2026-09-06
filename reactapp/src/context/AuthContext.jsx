@@ -34,14 +34,20 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  const login = async (email, password) => {
-    const response = await authApi.login({ email, password });
-    const { token: jwtToken, ...userData } = response.data;
-    localStorage.setItem('pmfby_token', jwtToken);
-    localStorage.setItem('pmfby_user', JSON.stringify(userData));
+  const login = async (identifierOrCreds, maybePassword) => {
+    const creds = typeof identifierOrCreds === 'object'
+      ? identifierOrCreds
+      : { identifier: identifierOrCreds, email: identifierOrCreds, password: maybePassword };
+    const response = await authApi.login(creds);
+    const authData = response.data?.data || response.data;
+    const jwtToken = authData.token;
+    if (jwtToken) {
+      localStorage.setItem('pmfby_token', jwtToken);
+    }
+    localStorage.setItem('pmfby_user', JSON.stringify(authData));
     setToken(jwtToken);
-    setUser(userData);
-    return userData;
+    setUser(authData);
+    return authData;
   };
 
   const register = async (userData) => {

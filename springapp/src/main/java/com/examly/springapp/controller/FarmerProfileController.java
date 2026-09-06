@@ -15,6 +15,16 @@ public class FarmerProfileController {
 
     private final FarmerProfileService farmerProfileService;
 
+    @PostMapping
+    public ResponseEntity<ApiResponse<FarmerProfileDTO>> createProfile(@Valid @RequestBody FarmerProfileDTO dto) {
+        Long targetUserId = dto.getUserId();
+        if (targetUserId == null) {
+            throw new IllegalArgumentException("User ID is required in the request body");
+        }
+        FarmerProfileDTO response = farmerProfileService.createOrUpdateProfile(targetUserId, dto);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Farmer profile saved successfully", response));
+    }
+
     @PostMapping("/user/{userId}")
     public ResponseEntity<ApiResponse<FarmerProfileDTO>> createOrUpdateProfile(
             @PathVariable Long userId,
@@ -27,5 +37,10 @@ public class FarmerProfileController {
     public ResponseEntity<ApiResponse<FarmerProfileDTO>> getProfileByUserId(@PathVariable Long userId) {
         FarmerProfileDTO response = farmerProfileService.getProfileByUserId(userId);
         return ResponseEntity.ok(new ApiResponse<>(true, "Farmer profile fetched successfully", response));
+    }
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<java.util.List<FarmerProfileDTO>>> getAllProfiles() {
+        return ResponseEntity.ok(new ApiResponse<>(true, "All farmer profiles fetched successfully", farmerProfileService.getAllProfiles()));
     }
 }

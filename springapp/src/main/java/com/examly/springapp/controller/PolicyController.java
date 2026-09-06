@@ -18,6 +18,18 @@ public class PolicyController {
 
     private final PolicyService policyService;
 
+    @PostMapping
+    public ResponseEntity<ApiResponse<PolicyDTO>> createPolicy(
+            @RequestParam(required = false) Long enrolledById,
+            @Valid @RequestBody PolicyDTO dto) {
+        Long farmerId = dto.getFarmerId();
+        if (farmerId == null) {
+            throw new IllegalArgumentException("farmerId is required in request body");
+        }
+        PolicyDTO response = policyService.enrollPolicy(farmerId, dto, enrolledById);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Policy enrolled successfully", response));
+    }
+
     @PostMapping("/enroll/farmer/{farmerId}")
     public ResponseEntity<ApiResponse<PolicyDTO>> enrollPolicy(
             @PathVariable Long farmerId,

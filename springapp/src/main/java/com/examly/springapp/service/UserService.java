@@ -10,6 +10,7 @@ import com.examly.springapp.entity.User;
 import com.examly.springapp.exception.InvalidNameException;
 import com.examly.springapp.exception.InvalidPhoneException;
 import com.examly.springapp.exception.ResourceNotFoundException;
+import com.examly.springapp.exception.UnauthorisedAccessException;
 import com.examly.springapp.repository.UserRepository;
 import com.examly.springapp.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
@@ -41,14 +42,21 @@ public class UserService {
             throw new IllegalArgumentException("Phone number is already registered");
         }
 
+        Role requestedRole = request.getRole() != null ? request.getRole() : Role.FARMER;
+        // Restrict ADMIN role self-registration:
+        if (requestedRole == Role.ADMIN) {
+            throw new UnauthorisedAccessException("Direct registration for ADMIN role is not permitted. Contact system administrator.");
+        }
+
         User user = new User();
         user.setName(request.getName());
         user.setPhoneNumber(request.getPhoneNumber());
         user.setEmail(request.getEmail());
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-        user.setRole(request.getRole());
+        user.setRole(requestedRole);
         user.setIsActive(true);
         user.setCreatedDate(LocalDateTime.now());
+
         User savedUser = userRepository.save(user);
         auditService.logAction(savedUser.getId(), "USER_REGISTER", "USER", savedUser.getId(),
                 "Registered new user with role: " + savedUser.getRole(), "127.0.0.1");

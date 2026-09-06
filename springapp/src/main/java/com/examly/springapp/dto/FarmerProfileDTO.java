@@ -1,5 +1,6 @@
 package com.examly.springapp.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
@@ -16,9 +17,11 @@ public class FarmerProfileDTO {
 
     @NotBlank(message = "Aadhaar number is required")
     @Pattern(regexp = "^\\d{12}$", message = "Aadhaar number must be exactly 12 digits")
+    @JsonAlias({"aadhaar", "aadhaarNo"})
     private String aadhaarNumber;
 
     @NotBlank(message = "Bank account number is required")
+    @JsonAlias({"bankAccountNumber", "accountNumber", "accountNo"})
     private String bankAccountNo;
 
     @NotBlank(message = "IFSC code is required")
@@ -36,5 +39,7 @@ public class FarmerProfileDTO {
 
     @NotBlank(message = "Pincode is required")
     @Pattern(regexp = "^\\d{6}$", message = "Pincode must be exactly 6 digits")
+    @JsonAlias({"pinCode", "postalCode", "zipCode"})
     private String pincode;
 }
+
