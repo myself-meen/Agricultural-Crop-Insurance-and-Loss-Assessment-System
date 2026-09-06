@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { CheckCircle, FileText, Calendar, IndianRupee, AlertCircle } from './Icons';
-import { policyApi, userApi } from '../services/api';
+import { policyApi, userApi, farmerProfileApi } from '../services/api';
 
 const STATUS_CHIP = {
   Active: { bg: '#DCFCE7', text: '#166534' },
@@ -26,6 +26,8 @@ export default function PolicyEnrollment({ user }) {
   const [selectedCrop, setSelectedCrop] = useState('Paddy');
   const [area, setArea] = useState('2.5');
   const [khasraNumber, setKhasraNumber] = useState('147/A, 148/B');
+  const [district, setDistrict] = useState(user?.district || 'Chennai');
+  const [state, setState] = useState(user?.state || 'Tamil Nadu');
   const [season, setSeason] = useState('KHARIF');
   const [enrolled, setEnrolled] = useState(false);
   const [filter, setFilter] = useState('All');
@@ -40,7 +42,29 @@ export default function PolicyEnrollment({ user }) {
 
   useEffect(() => {
     loadPolicies();
+    if (isFarmer && user?.id) {
+      loadFarmerProfile(user.id);
+    }
   }, [user]);
+
+  useEffect(() => {
+    if (!isFarmer && selectedFarmerId) {
+      loadFarmerProfile(selectedFarmerId);
+    }
+  }, [selectedFarmerId, isFarmer]);
+
+  const loadFarmerProfile = async (farmerId) => {
+    try {
+      const res = await farmerProfileApi.getProfile(farmerId);
+      const prof = res.data?.data || res.data;
+      if (prof) {
+        if (prof.district) setDistrict(prof.district);
+        if (prof.state) setState(prof.state);
+      }
+    } catch (e) {
+      // ignore if profile not yet created
+    }
+  };
 
   const loadPolicies = async () => {
     try {
@@ -61,6 +85,8 @@ export default function PolicyEnrollment({ user }) {
             rawId: p.id,
             farmer: p.farmerName || (p.farmerId === 2 ? 'Farmer Ramesh' : (isFarmer ? (user?.name || 'Registered Farmer') : `Farmer #${p.farmerId || '1'}`)),
             crop: p.cropName || 'Paddy',
+            district: p.district || 'Regional District',
+            state: p.state || 'State Jurisdiction',
             season: `${p.season || 'KHARIF'} ${p.cropYear || 2026}`,
             area: `${areaVal} Ha`,
             sumInsured: `₹${Number(sumVal).toLocaleString()}`,
@@ -111,8 +137,8 @@ export default function PolicyEnrollment({ user }) {
         sumInsured: sumInsured,
         farmerId: targetFarmerId,
         enrolledById: enrolledById,
-        state: 'Maharashtra',
-        district: 'Nashik',
+        state: state || 'Tamil Nadu',
+        district: district || 'Chennai',
       });
       const newPolicy = res.data?.data || res.data;
       const newId = newPolicy?.id || '10422';
@@ -122,6 +148,23 @@ export default function PolicyEnrollment({ user }) {
     } catch (err) {
       console.error('API error enrolling policy:', err);
       setErrorMessage(err.message || 'Failed to enroll policy in database.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancelPolicy = async (policy) => {
+    if (!window.confirm(`Are you sure you want to cancel and delete Policy ${policy.id}? This will remove the policy enrollment.`)) {
+      return;
+    }
+    setLoading(true);
+    setErrorMessage(null);
+    try {
+      await policyApi.deletePolicy(policy.rawId);
+      await loadPolicies();
+    } catch (err) {
+      console.error('Failed to cancel policy:', err);
+      setErrorMessage(err.message || 'Failed to cancel policy. Note: Policies with active loss notifications or claims cannot be cancelled.');
     } finally {
       setLoading(false);
     }
@@ -226,8 +269,12 @@ export default function PolicyEnrollment({ user }) {
                   </select>
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6, textTransform: 'uppercase' }}>Insured Sown Area (Ha)</label>
-                  <input type="number" value={area} onChange={e => setArea(e.target.value)} min="0.1" step="0.1" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1.5px solid #E2E8F0', fontSize: 14, fontFamily: 'DM Mono, monospace' }} />
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6, textTransform: 'uppercase' }}>District Location *</label>
+                  <input value={district} onChange={e => setDistrict(e.target.value)} placeholder="e.g. Chennai, Meerut, Pune" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1.5px solid #E2E8F0', fontSize: 14 }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6, textTransform: 'uppercase' }}>State Jurisdiction *</label>
+                  <input value={state} onChange={e => setState(e.target.value)} placeholder="e.g. Tamil Nadu, Uttar Pradesh" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1.5px solid #E2E8F0', fontSize: 14 }} />
                 </div>
                 <div style={{ gridColumn: 'span 2' }}>
                   <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6, textTransform: 'uppercase' }}>Survey / Khasra / Gat Numbers</label>
@@ -306,7 +353,7 @@ export default function PolicyEnrollment({ user }) {
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ background: '#F8FAFC' }}>
-                    {['Policy ID', 'Farmer', 'Crop', 'Season', 'Area', 'Sum Insured', 'Farmer Premium', 'Period', 'Status'].map(h => (
+                    {['Policy ID', 'Farmer', 'Crop', 'Season', 'Area', 'Sum Insured', 'Farmer Premium', 'Period', 'Status', 'Actions'].map(h => (
                       <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6B7A8D', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
                     ))}
                   </tr>
@@ -328,6 +375,22 @@ export default function PolicyEnrollment({ user }) {
                         <span style={{ padding: '3px 10px', borderRadius: 20, fontSize: 12, fontWeight: 600, background: STATUS_CHIP[p.status]?.bg || '#DCFCE7', color: STATUS_CHIP[p.status]?.text || '#166534' }}>
                           {p.status}
                         </span>
+                      </td>
+                      <td style={{ padding: '12px 14px' }}>
+                        {p.status === 'Active' && (
+                          <button
+                            onClick={() => handleCancelPolicy(p)}
+                            title="Cancel and remove policy"
+                            style={{
+                              padding: '4px 8px', borderRadius: 6,
+                              background: '#FEE2E2', border: '1px solid #FCA5A5',
+                              color: '#991B1B', fontSize: 11, fontWeight: 600,
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Cancel Policy
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}

@@ -65,6 +65,7 @@ export const userApi = {
 export const farmerProfileApi = {
   getProfile: (userId) => api.get(`/farmer-profiles/user/${userId}`),
   saveProfile: (userId, data) => api.post(`/farmer-profiles/user/${userId}`, data),
+  deleteProfile: (userId) => api.delete(`/farmer-profiles/user/${userId}`),
   getAllProfiles: () => api.get('/farmer-profiles'),
   getAll: () => api.get('/farmer-profiles'),
 };
@@ -75,6 +76,7 @@ export const policyApi = {
   getAllPolicies: () => api.get('/policies'),
   getAll: () => api.get('/policies'),
   updatePolicyStatus: (id, status) => api.put(`/policies/${id}/status?status=${status}`),
+  deletePolicy: (id) => api.delete(`/policies/${id}`),
 };
 
 export const lossNotificationApi = {
@@ -83,6 +85,7 @@ export const lossNotificationApi = {
   getLossByFarmer: (farmerId) => api.get(`/loss-notifications/farmer/${farmerId}`),
   getAllLosses: () => api.get('/loss-notifications'),
   getAll: () => api.get('/loss-notifications'),
+  deleteLoss: (id) => api.delete(`/loss-notifications/${id}`),
 };
 
 export const surveyApi = {
@@ -95,6 +98,7 @@ export const surveyApi = {
   getSurveysByStatus: (status) => api.get(`/survey-assignments/status/${status}`),
   getAllSurveys: () => api.get('/survey-assignments'),
   getAll: () => api.get('/survey-assignments'),
+  deleteSurvey: (id) => api.delete(`/survey-assignments/${id}`),
 };
 
 export const claimApi = {
@@ -118,6 +122,7 @@ export const claimApi = {
   getAll: () => api.get('/claims'),
   getClaimsByFarmer: (farmerId) => api.get(`/claims/farmer/${farmerId}`),
   getClaimById: (id) => api.get(`/claims/${id}`),
+  deleteClaim: (id) => api.delete(`/claims/${id}`),
 };
 
 export const analyticsApi = {

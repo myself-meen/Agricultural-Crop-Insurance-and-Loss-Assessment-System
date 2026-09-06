@@ -63,6 +63,15 @@ public class FarmerProfileService {
         return convertToDTO(profile);
     }
 
+    public void deleteProfile(Long userId) {
+        FarmerProfile profile = farmerProfileRepository.findByUserId(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Profile not found for User ID: " + userId));
+
+        farmerProfileRepository.delete(profile);
+        auditService.logAction(userId, "FARMER_PROFILE_DELETED", "FARMER_PROFILE", profile.getId(),
+                "Farmer KYC profile reset/deleted for user ID: " + userId, "127.0.0.1");
+    }
+
     private FarmerProfileDTO convertToDTO(FarmerProfile profile) {
         FarmerProfileDTO dto = new FarmerProfileDTO();
         dto.setId(profile.getId());

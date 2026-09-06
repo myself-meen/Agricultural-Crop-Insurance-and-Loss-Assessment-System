@@ -43,4 +43,10 @@ public class FarmerProfileController {
     public ResponseEntity<ApiResponse<java.util.List<FarmerProfileDTO>>> getAllProfiles() {
         return ResponseEntity.ok(new ApiResponse<>(true, "All farmer profiles fetched successfully", farmerProfileService.getAllProfiles()));
     }
+
+    @DeleteMapping("/user/{userId}")
+    public ResponseEntity<ApiResponse<Void>> deleteProfile(@PathVariable Long userId) {
+        farmerProfileService.deleteProfile(userId);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Farmer KYC profile reset/deleted successfully", null));
+    }
 }

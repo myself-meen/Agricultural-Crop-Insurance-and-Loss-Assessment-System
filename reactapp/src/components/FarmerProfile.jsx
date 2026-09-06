@@ -108,6 +108,35 @@ export default function FarmerProfile({ user }) {
     }
   };
 
+  const handleResetProfile = async () => {
+    if (!window.confirm('Are you sure you want to reset your KYC Profile? This will clear your saved Aadhaar and Bank account linkage from the PMFBY registry.')) {
+      return;
+    }
+    setSaving(true);
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    try {
+      await farmerProfileApi.deleteProfile(user.id);
+      setProfile(null);
+      setFormData({
+        aadhaarNumber: '',
+        bankAccountNo: '',
+        ifscCode: '',
+        bankName: '',
+        state: 'Maharashtra',
+        district: 'Nashik',
+        pincode: '422001',
+      });
+      setIsEditing(true);
+      setSuccessMessage('KYC Profile reset successfully.');
+    } catch (err) {
+      console.error('Failed to reset profile:', err);
+      setErrorMessage(err.message || 'Failed to reset profile.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading) {
     return (
       <div style={{ padding: '60px 20px', textAlign: 'center', color: '#6B7A8D' }}>
@@ -131,16 +160,28 @@ export default function FarmerProfile({ user }) {
           </p>
         </div>
         {!isFirstTime && !isEditing && (
-          <button
-            onClick={() => setIsEditing(true)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              padding: '9px 18px', borderRadius: 8, background: '#1B5E8A', color: 'white',
-              border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600
-            }}
-          >
-            <Edit3 size={15} /> Update Profile
-          </button>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button
+              onClick={handleResetProfile}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '9px 14px', borderRadius: 8, background: '#FEE2E2', color: '#991B1B',
+                border: '1px solid #FCA5A5', cursor: 'pointer', fontSize: 13, fontWeight: 600
+              }}
+            >
+              Reset KYC
+            </button>
+            <button
+              onClick={() => setIsEditing(true)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                padding: '9px 18px', borderRadius: 8, background: '#1B5E8A', color: 'white',
+                border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600
+              }}
+            >
+              <Edit3 size={15} /> Update Profile
+            </button>
+          </div>
         )}
       </div>
 

@@ -52,25 +52,6 @@ public class LossNotificationService {
         policy.setStatus(PolicyStatus.CLAIM_FILED);
         policyRepository.save(policy);
 
-        // Seamless lifecycle integration: Automatically assign an accredited field surveyor
-        // so the loss is immediately visible in the surveyor's active inspection queue!
-        List<User> surveyors = userRepository.findByRole(Role.SURVEYOR);
-        if (!surveyors.isEmpty()) {
-            User assignedSurveyor = surveyors.stream()
-                    .filter(s -> "surveyor@assess.gov.in".equalsIgnoreCase(s.getEmail()))
-                    .findFirst()
-                    .orElse(surveyors.get(0));
-            SurveyAssignment survey = new SurveyAssignment();
-            survey.setNotification(saved);
-            survey.setSurveyor(assignedSurveyor);
-            survey.setSurveyDate(LocalDate.now().plusDays(2));
-            survey.setStatus(SurveyStatus.ASSIGNED);
-            surveyAssignmentRepository.save(survey);
-
-            saved.setStatus(LossStatus.SURVEYOR_ASSIGNED);
-            saved = lossNotificationRepository.save(saved);
-        }
-
         auditService.logAction(policy.getFarmer().getId(), "LOSS_NOTIFICATION_SUBMITTED", "LOSS_NOTIFICATION", saved.getId(),
                 "Reported loss of type: " + saved.getLossType() + " for policy ID: " + policyId, "127.0.0.1");
 
@@ -107,6 +88,28 @@ public class LossNotificationService {
         LossNotification notification = lossNotificationRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Loss notification not found with ID: " + id));
         return convertToDTO(notification);
+    }
+
+    public void deleteLossNotification(Long id) {
+        LossNotification notification = lossNotificationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Loss notification not found with ID: " + id));
+
+        if (notification.getStatus() != LossStatus.SUBMITTED) {
+            throw new IllegalStateException("Cannot delete loss notification in status: " + notification.getStatus() + ". Only unassigned (SUBMITTED) notifications can be withdrawn.");
+        }
+
+        Long farmerId = (notification.getPolicy() != null && notification.getPolicy().getFarmer() != null)
+                ? notification.getPolicy().getFarmer().getId() : 1L;
+
+        Policy policy = notification.getPolicy();
+        if (policy != null) {
+            policy.setStatus(PolicyStatus.ACTIVE);
+            policyRepository.save(policy);
+        }
+
+        lossNotificationRepository.delete(notification);
+        auditService.logAction(farmerId, "LOSS_NOTIFICATION_WITHDRAWN", "LOSS_NOTIFICATION", id,
+                "Withdrawn loss notification ID: " + id, "127.0.0.1");
     }
 
     public LossNotificationDTO convertToDTO(LossNotification notification) {

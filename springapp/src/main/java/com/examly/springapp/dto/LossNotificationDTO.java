@@ -26,6 +26,7 @@ public class LossNotificationDTO {
     private BigDecimal affectedAreaHa;
 
     @JsonAlias({"incidentDate", "incident_date", "loss_date"})
+    @com.fasterxml.jackson.annotation.JsonFormat(shape = com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd['T'HH:mm[:ss[.SSS[XXX]]]]")
     private LocalDateTime lossDate;
 
     private LocalDateTime notificationDate;

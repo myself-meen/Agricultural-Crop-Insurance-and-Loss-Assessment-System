@@ -72,4 +72,10 @@ public class SurveyAssignmentController {
     public ResponseEntity<ApiResponse<SurveyAssignmentDTO>> getAssignmentById(@PathVariable Long id) {
         return ResponseEntity.ok(new ApiResponse<>(true, "Survey assignment fetched successfully", surveyAssignmentService.getAssignmentById(id)));
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteAssignment(@PathVariable Long id) {
+        surveyAssignmentService.deleteAssignment(id);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Surveyor unassigned and notification reverted to submitted", null));
+    }
 }

@@ -23,7 +23,7 @@ public class ClaimController {
     @PutMapping("/{id}/approve-l1")
     public ResponseEntity<ApiResponse<ClaimDTO>> level1Approve(
             @PathVariable Long id,
-            @RequestParam Long officerId,
+            @RequestParam(required = false) Long officerId,
             @RequestParam(required = false) String remarks) {
         ClaimDTO response = claimService.level1Approve(id, officerId, remarks);
         return ResponseEntity.ok(new ApiResponse<>(true, "Level 1 approval completed", response));
@@ -32,7 +32,7 @@ public class ClaimController {
     @PutMapping("/{id}/approve-l2")
     public ResponseEntity<ApiResponse<ClaimDTO>> level2Approve(
             @PathVariable Long id,
-            @RequestParam Long officerId,
+            @RequestParam(required = false) Long officerId,
             @RequestParam(required = false) String remarks) {
         ClaimDTO response = claimService.level2Approve(id, officerId, remarks);
         return ResponseEntity.ok(new ApiResponse<>(true, "Level 2 approval completed", response));
@@ -47,7 +47,7 @@ public class ClaimController {
     @PutMapping("/{id}/reject")
     public ResponseEntity<ApiResponse<ClaimDTO>> rejectClaim(
             @PathVariable Long id,
-            @RequestParam Long officerId,
+            @RequestParam(required = false) Long officerId,
             @RequestParam(required = false) String remarks) {
         ClaimDTO response = claimService.rejectClaim(id, officerId, remarks);
         return ResponseEntity.ok(new ApiResponse<>(true, "Claim rejected successfully", response));
@@ -76,5 +76,11 @@ public class ClaimController {
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<ClaimDTO>> getClaimById(@PathVariable Long id) {
         return ResponseEntity.ok(new ApiResponse<>(true, "Claim fetched successfully", claimService.getClaimById(id)));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteClaim(@PathVariable Long id) {
+        claimService.deleteClaim(id);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Draft claim revoked and deleted successfully", null));
     }
 }

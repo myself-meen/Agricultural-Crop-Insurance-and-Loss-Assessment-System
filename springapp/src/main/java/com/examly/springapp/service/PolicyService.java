@@ -6,6 +6,10 @@ import com.examly.springapp.entity.PolicyStatus;
 import com.examly.springapp.entity.Season;
 import com.examly.springapp.entity.User;
 import com.examly.springapp.exception.ResourceNotFoundException;
+import com.examly.springapp.entity.FarmerProfile;
+import com.examly.springapp.repository.ClaimRepository;
+import com.examly.springapp.repository.FarmerProfileRepository;
+import com.examly.springapp.repository.LossNotificationRepository;
 import com.examly.springapp.repository.PolicyRepository;
 import com.examly.springapp.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +25,9 @@ public class PolicyService {
 
     private final PolicyRepository policyRepository;
     private final UserRepository userRepository;
+    private final FarmerProfileRepository farmerProfileRepository;
+    private final LossNotificationRepository lossNotificationRepository;
+    private final ClaimRepository claimRepository;
     private final AuditService auditService;
 
     public PolicyDTO enrollPolicy(Long farmerId, PolicyDTO dto, Long enrolledById) {
@@ -35,13 +42,33 @@ public class PolicyService {
                     "), crop (" + dto.getCropName() + "), and season (" + dto.getSeason() + " " + dto.getCropYear() + ") is already enrolled.");
         }
 
+        FarmerProfile farmerProfile = farmerProfileRepository != null
+                ? farmerProfileRepository.findByUserId(farmerId).orElse(null)
+                : null;
+
+        String district = (dto.getDistrict() != null && !dto.getDistrict().trim().isEmpty()) ? dto.getDistrict().trim() : null;
+        if (district == null && farmerProfile != null && farmerProfile.getDistrict() != null && !farmerProfile.getDistrict().trim().isEmpty()) {
+            district = farmerProfile.getDistrict().trim();
+        }
+        if (district == null) {
+            district = "Regional District";
+        }
+
+        String state = (dto.getState() != null && !dto.getState().trim().isEmpty()) ? dto.getState().trim() : null;
+        if (state == null && farmerProfile != null && farmerProfile.getState() != null && !farmerProfile.getState().trim().isEmpty()) {
+            state = farmerProfile.getState().trim();
+        }
+        if (state == null) {
+            state = "State Jurisdiction";
+        }
+
         Policy policy = new Policy();
 
         policy.setFarmer(farmer);
         policy.setEnrolledBy(enrolledBy);
         policy.setKhasraSurveyNo(dto.getKhasraSurveyNo());
-        policy.setState(dto.getState() != null ? dto.getState() : "Maharashtra");
-        policy.setDistrict(dto.getDistrict() != null ? dto.getDistrict() : "Nashik");
+        policy.setState(state);
+        policy.setDistrict(district);
         policy.setCropName(dto.getCropName());
         policy.setSeason(dto.getSeason());
         policy.setCropYear(dto.getCropYear() != null ? dto.getCropYear() : LocalDate.now().getYear());
@@ -124,6 +151,24 @@ public class PolicyService {
         Policy policy = policyRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Policy not found with ID: " + id));
         return convertToDTO(policy);
+    }
+
+    public void deletePolicy(Long id) {
+        Policy policy = policyRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Policy not found with ID: " + id));
+
+        if (!lossNotificationRepository.findByPolicyId(id).isEmpty()) {
+            throw new IllegalStateException("Cannot delete policy ID " + id + " because active loss notifications are linked to it.");
+        }
+
+        if (!claimRepository.findByPolicyId(id).isEmpty()) {
+            throw new IllegalStateException("Cannot delete policy ID " + id + " because claims are registered under it.");
+        }
+
+        Long farmerId = policy.getFarmer() != null ? policy.getFarmer().getId() : 1L;
+        policyRepository.delete(policy);
+        auditService.logAction(farmerId, "POLICY_DELETED", "POLICY", id,
+                "Cancelled and deleted policy ID: " + id + " for crop: " + policy.getCropName(), "127.0.0.1");
     }
 
     public PolicyDTO convertToDTO(Policy policy) {

@@ -61,4 +61,10 @@ public class LossNotificationController {
     public ResponseEntity<ApiResponse<LossNotificationDTO>> getLossNotificationById(@PathVariable Long id) {
         return ResponseEntity.ok(new ApiResponse<>(true, "Loss notification fetched successfully", lossNotificationService.getLossNotificationById(id)));
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteLossNotification(@PathVariable Long id) {
+        lossNotificationService.deleteLossNotification(id);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Loss notification withdrawn and deleted successfully", null));
+    }
 }

@@ -116,6 +116,26 @@ public class SurveyAssignmentService {
                 .orElseThrow(() -> new ResourceNotFoundException("Survey assignment not found with ID: " + id));
         return convertToDTO(assignment);
     }
+
+    public void deleteAssignment(Long id) {
+        SurveyAssignment assignment = surveyAssignmentRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Survey assignment not found with ID: " + id));
+
+        if (assignment.getStatus() != SurveyStatus.ASSIGNED) {
+            throw new IllegalStateException("Cannot unassign surveyor after survey results have been submitted.");
+        }
+
+        LossNotification notification = assignment.getNotification();
+        if (notification != null) {
+            notification.setStatus(LossStatus.SUBMITTED);
+            lossNotificationRepository.save(notification);
+        }
+
+        surveyAssignmentRepository.delete(assignment);
+        auditService.logAction(assignment.getSurveyor().getId(), "SURVEY_UNASSIGNED", "SURVEY_ASSIGNMENT", id,
+                "Unassigned surveyor and reverted notification ID: " + (notification != null ? notification.getId() : "N/A"), "127.0.0.1");
+    }
+
     public SurveyAssignmentDTO convertToDTO(SurveyAssignment assignment) {
         SurveyAssignmentDTO dto = new SurveyAssignmentDTO();
         dto.setId(assignment.getId());

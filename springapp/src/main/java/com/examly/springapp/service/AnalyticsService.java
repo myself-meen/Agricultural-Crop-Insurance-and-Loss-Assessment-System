@@ -28,7 +28,7 @@ public class AnalyticsService {
         long totalPolicies = policies.size();
 
         BigDecimal totalSumInsured = policies.stream()
-                .map(Policy::getSumInsured)
+                .map(p -> p.getSumInsured() != null ? p.getSumInsured() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal totalFarmerPremium = policies.stream()

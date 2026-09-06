@@ -125,6 +125,7 @@ export default function AdminManagement({ user }) {
       if (Array.isArray(list) && list.length > 0) {
         const mapped = list.map(u => ({
           id: `USR-${u.id}`,
+          rawId: u.id,
           name: u.name,
           email: u.email,
           role: (u.role || 'farmer').toLowerCase().replace('insurer', 'insurance_officer'),
@@ -136,6 +137,28 @@ export default function AdminManagement({ user }) {
       }
     } catch (err) {
       console.warn('User directory backend fetch:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteUser = async (u) => {
+    if (!u.rawId) {
+      setUsers(prev => prev.filter(x => x.id !== u.id));
+      return;
+    }
+    if (!window.confirm(`Are you sure you want to permanently delete user "${u.name}" (${u.email})?`)) {
+      return;
+    }
+    setLoading(true);
+    setErrorMessage(null);
+    try {
+      await userApi.deleteUser(u.rawId);
+      setActionSuccess(`User account "${u.name}" deleted successfully.`);
+      await fetchUsers();
+    } catch (err) {
+      console.error('Failed to delete user:', err);
+      setErrorMessage(err.message || 'Failed to delete user account.');
     } finally {
       setLoading(false);
     }
@@ -435,12 +458,24 @@ export default function AdminManagement({ user }) {
                     </span>
                   </td>
                   <td style={{ padding: '14px 16px' }}>
-                    <button
-                      onClick={() => toggleUserStatus(u.id)}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: u.status === 'Active' ? '#C0392B' : '#2E7D52', fontSize: 12, fontWeight: 600 }}
-                    >
-                      {u.status === 'Active' ? 'Suspend' : 'Activate'}
-                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <button
+                        onClick={() => toggleUserStatus(u.id)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: u.status === 'Active' ? '#C0392B' : '#2E7D52', fontSize: 12, fontWeight: 600 }}
+                      >
+                        {u.status === 'Active' ? 'Suspend' : 'Activate'}
+                      </button>
+                      <button
+                        onClick={() => handleDeleteUser(u)}
+                        title="Delete user account"
+                        style={{
+                          background: '#FEE2E2', border: '1px solid #FCA5A5', borderRadius: 6,
+                          cursor: 'pointer', color: '#991B1B', fontSize: 11, fontWeight: 600, padding: '3px 8px'
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

@@ -32,6 +32,8 @@ export default function LossNotification({ user }) {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
+  const [withdrawTarget, setWithdrawTarget] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
 
   const isFarmer = (user?.role || '').toLowerCase() === 'farmer';
 
@@ -61,6 +63,8 @@ export default function LossNotification({ user }) {
         if (Array.isArray(list)) {
           setNotifications(list.map(l => ({
             id: `LN-${l.id}`,
+            rawId: l.id,
+            rawStatus: l.status,
             farmer: l.farmerName || (isFarmer ? (user?.name || 'Registered Farmer') : 'Registered Farmer'),
             crop: l.cropName || 'Paddy',
             cause: l.lossType,
@@ -83,6 +87,21 @@ export default function LossNotification({ user }) {
       }
     } catch (e) {
       console.warn('Fallback error in loss data load', e);
+    }
+  };
+
+  const confirmWithdraw = async () => {
+    if (!withdrawTarget) return;
+    setActionLoading(true);
+    try {
+      await lossNotificationApi.deleteLoss(withdrawTarget.rawId);
+      setWithdrawTarget(null);
+      await loadData();
+    } catch (err) {
+      console.error('Error withdrawing loss notification:', err);
+      alert(err.message || 'Failed to withdraw loss notification');
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -304,7 +323,7 @@ export default function LossNotification({ user }) {
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ background: '#F8FAFC' }}>
-                  {['Notice ID', 'Farmer', 'Crop', 'Cause of Loss', 'Date', 'GPS Tag', 'Status'].map(h => (
+                  {['Notice ID', 'Farmer', 'Crop', 'Cause of Loss', 'Date', 'GPS Tag', 'Status', 'Actions'].map(h => (
                     <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6B7A8D', textTransform: 'uppercase' }}>{h}</th>
                   ))}
                 </tr>
@@ -323,11 +342,67 @@ export default function LossNotification({ user }) {
                         {n.status}
                       </span>
                     </td>
+                    <td style={{ padding: '12px 14px' }}>
+                      {n.rawStatus === 'SUBMITTED' ? (
+                        <button
+                          onClick={() => setWithdrawTarget(n)}
+                          style={{
+                            padding: '4px 10px', borderRadius: 6,
+                            background: '#FEE2E2', border: '1px solid #FCA5A5',
+                            color: '#991B1B', fontSize: 12, fontWeight: 600,
+                            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4
+                          }}
+                        >
+                          Withdraw
+                        </button>
+                      ) : (
+                        <span style={{ fontSize: 11, color: '#94A3B8' }}>Locked</span>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           )}
+        </div>
+      )}
+
+      {/* Withdraw / Delete Confirmation Modal */}
+      {withdrawTarget && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20
+        }}>
+          <div style={{ background: 'white', borderRadius: 12, padding: 24, maxWidth: 440, width: '100%', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+              <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#FEE2E2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <AlertTriangle size={20} color="#DC2626" />
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#1A2332' }}>Withdraw Loss Notification</h3>
+                <span style={{ fontSize: 12, color: '#64748B' }}>Notice ID: {withdrawTarget.id}</span>
+              </div>
+            </div>
+            <p style={{ fontSize: 13, color: '#475569', lineHeight: 1.5, marginBottom: 20 }}>
+              Are you sure you want to withdraw this crop damage intimation for <strong>{withdrawTarget.crop}</strong>? Since no surveyor has been dispatched yet, you can safely cancel this report.
+            </p>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setWithdrawTarget(null)}
+                disabled={actionLoading}
+                style={{ padding: '8px 16px', borderRadius: 8, background: 'white', border: '1px solid #E2E8F0', color: '#475569', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+              >
+                Keep Notification
+              </button>
+              <button
+                onClick={confirmWithdraw}
+                disabled={actionLoading}
+                style={{ padding: '8px 16px', borderRadius: 8, background: '#DC2626', color: 'white', border: 'none', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+              >
+                {actionLoading ? 'Withdrawing...' : 'Yes, Withdraw Notice'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

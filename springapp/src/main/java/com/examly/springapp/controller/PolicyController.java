@@ -39,6 +39,15 @@ public class PolicyController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Policy enrolled successfully", response));
     }
 
+    @PostMapping("/farmer/{farmerId}")
+    public ResponseEntity<ApiResponse<PolicyDTO>> enrollPolicyByFarmer(
+            @PathVariable Long farmerId,
+            @RequestParam(required = false) Long enrolledById,
+            @Valid @RequestBody PolicyDTO dto) {
+        PolicyDTO response = policyService.enrollPolicy(farmerId, dto, enrolledById);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Policy enrolled successfully", response));
+    }
+
     @GetMapping("/farmer/{farmerId}")
     public ResponseEntity<ApiResponse<List<PolicyDTO>>> getPoliciesByFarmer(@PathVariable Long farmerId) {
         return ResponseEntity.ok(new ApiResponse<>(true, "Farmer policies fetched successfully", policyService.getPoliciesByFarmer(farmerId)));
@@ -64,5 +73,11 @@ public class PolicyController {
             @PathVariable Long id,
             @RequestParam com.examly.springapp.entity.PolicyStatus status) {
         return ResponseEntity.ok(new ApiResponse<>(true, "Policy status updated successfully", policyService.updatePolicyStatus(id, status)));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deletePolicy(@PathVariable Long id) {
+        policyService.deletePolicy(id);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Policy cancelled and deleted successfully", null));
     }
 }

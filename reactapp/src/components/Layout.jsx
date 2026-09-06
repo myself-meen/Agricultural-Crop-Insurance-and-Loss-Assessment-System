@@ -5,17 +5,48 @@ import {
   Wheat, Shield, MapPin, User
 } from './Icons';
 
-const NAV_ITEMS = [
-  { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} />, roles: ['farmer', 'bank_officer', 'surveyor', 'insurance_officer', 'state_officer', 'admin'] },
-  { id: 'farmer_profile', label: 'My Profile & KYC', icon: <User size={18} />, roles: ['farmer'] },
-  { id: 'farmer_directory', label: 'Farmer Directory', icon: <Users size={18} />, roles: ['bank_officer', 'admin', 'insurance_officer', 'state_officer'] },
-  { id: 'policy_enrollment', label: 'Policy Enrollment', icon: <FileText size={18} />, roles: ['farmer', 'bank_officer', 'insurance_officer', 'admin', 'state_officer'] },
-  { id: 'loss_notification', label: 'Loss Notification', icon: <AlertTriangle size={18} />, roles: ['farmer', 'bank_officer', 'admin', 'insurance_officer', 'state_officer'] },
-  { id: 'survey_management', label: 'Survey Management', icon: <ClipboardCheck size={18} />, roles: ['surveyor', 'insurance_officer', 'state_officer', 'admin'] },
-  { id: 'claim_management', label: 'Claim Management', icon: <Shield size={18} />, roles: ['farmer', 'bank_officer', 'insurance_officer', 'state_officer', 'admin'] },
-  { id: 'analytics', label: 'Analytics & Reports', icon: <BarChart3 size={18} />, roles: ['insurance_officer', 'state_officer', 'admin', 'bank_officer'] },
-  { id: 'admin_management', label: 'Admin Management', icon: <Settings size={18} />, roles: ['admin'] },
-];
+const ROLE_NAV_MAP = {
+  farmer: [
+    { id: 'dashboard', label: 'My Dashboard', icon: <LayoutDashboard size={18} /> },
+    { id: 'farmer_profile', label: 'My Profile & KYC', icon: <User size={18} /> },
+    { id: 'policy_enrollment', label: 'My Policies & Enrollment', icon: <FileText size={18} /> },
+    { id: 'loss_notification', label: 'Report Crop Damage', icon: <AlertTriangle size={18} /> },
+    { id: 'claim_management', label: 'My Claims & DBT Status', icon: <Shield size={18} /> },
+  ],
+  bank_officer: [
+    { id: 'dashboard', label: 'Bank Dashboard', icon: <LayoutDashboard size={18} /> },
+    { id: 'farmer_directory', label: 'Farmer Directory & KYC', icon: <Users size={18} /> },
+    { id: 'policy_enrollment', label: 'Enroll Farmer Policy', icon: <FileText size={18} /> },
+    { id: 'claim_management', label: 'DBT Disbursements', icon: <Shield size={18} /> },
+  ],
+  surveyor: [
+    { id: 'dashboard', label: 'Surveyor Dashboard', icon: <LayoutDashboard size={18} /> },
+    { id: 'survey_management', label: 'Field Survey Inspections', icon: <ClipboardCheck size={18} /> },
+  ],
+  insurance_officer: [
+    { id: 'dashboard', label: 'Actuarial Dashboard', icon: <LayoutDashboard size={18} /> },
+    { id: 'survey_management', label: 'Survey Management', icon: <ClipboardCheck size={18} /> },
+    { id: 'claim_management', label: 'Claim Approvals & Settlement', icon: <Shield size={18} /> },
+    { id: 'analytics', label: 'Loss Analytics & Reports', icon: <BarChart3 size={18} /> },
+  ],
+  state_officer: [
+    { id: 'dashboard', label: 'State Agri Dashboard', icon: <LayoutDashboard size={18} /> },
+    { id: 'farmer_directory', label: 'Farmer Directory', icon: <Users size={18} /> },
+    { id: 'survey_management', label: 'Survey Oversight', icon: <ClipboardCheck size={18} /> },
+    { id: 'claim_management', label: 'Claims Overview', icon: <Shield size={18} /> },
+    { id: 'analytics', label: 'PMFBY State Analytics', icon: <BarChart3 size={18} /> },
+  ],
+  admin: [
+    { id: 'dashboard', label: 'System Dashboard', icon: <LayoutDashboard size={18} /> },
+    { id: 'farmer_directory', label: 'Farmer Directory', icon: <Users size={18} /> },
+    { id: 'policy_enrollment', label: 'Policy Management', icon: <FileText size={18} /> },
+    { id: 'loss_notification', label: 'Loss Notifications', icon: <AlertTriangle size={18} /> },
+    { id: 'survey_management', label: 'Survey Management', icon: <ClipboardCheck size={18} /> },
+    { id: 'claim_management', label: 'Claim Management', icon: <Shield size={18} /> },
+    { id: 'analytics', label: 'Analytics & Reports', icon: <BarChart3 size={18} /> },
+    { id: 'admin_management', label: 'User Lifecycle & Admin', icon: <Settings size={18} /> },
+  ],
+};
 
 export const ROLE_DESIGNATIONS = {
   farmer: 'Registered Farmer',
@@ -49,7 +80,7 @@ export default function Layout({ user, currentPage, onNavigate, onLogout, childr
   const [notifOpen, setNotifOpen] = useState(false);
 
   const userRole = (user?.role || 'farmer').toLowerCase().replace('insurer', 'insurance_officer');
-  const visibleNav = NAV_ITEMS.filter(item => item.roles.includes(userRole));
+  const visibleNav = ROLE_NAV_MAP[userRole] || ROLE_NAV_MAP.farmer;
 
   return (
     <div style={{ display: 'flex', height: '100vh', background: 'var(--background)', overflow: 'hidden' }}>
@@ -199,7 +230,7 @@ export default function Layout({ user, currentPage, onNavigate, onLogout, childr
             <span>AgroShield</span>
             <ChevronRight size={14} />
             <span style={{ color: 'var(--foreground)', fontWeight: 600 }}>
-              {NAV_ITEMS.find(n => n.id === currentPage)?.label || 'Dashboard'}
+              {visibleNav.find(n => n.id === currentPage)?.label || 'Dashboard'}
             </span>
           </div>
 

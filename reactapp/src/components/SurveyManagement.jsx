@@ -88,7 +88,7 @@ export default function SurveyManagement({ user }) {
       if (lossesRes.status === 'fulfilled') {
         const lList = lossesRes.value.data?.data || lossesRes.value.data || [];
         if (Array.isArray(lList)) {
-          const pending = lList.filter(l => l.status === 'SUBMITTED' || l.status === 'SURVEYOR_ASSIGNED' || l.status === 'Pending' || l.status === 'Pending Review');
+          const pending = lList.filter(l => l.status === 'SUBMITTED' || l.status === 'Pending' || l.status === 'Pending Review');
           setPendingLosses(pending.map(l => ({
             id: l.id,
             displayId: `LN-${l.id}`,
@@ -258,6 +258,25 @@ export default function SurveyManagement({ user }) {
     } catch (err) {
       console.error('Failed to update survey status:', err);
       setErrorMessage(err.message || 'Failed to update survey status.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Unassign / Cancel a survey assignment (returns notice to pending queue)
+  const handleUnassignSurvey = async (surveyId) => {
+    if (!window.confirm(`Are you sure you want to unassign Survey SRV-${surveyId}? The loss notification will return to SUBMITTED state for reassignment.`)) {
+      return;
+    }
+    setLoading(true);
+    setErrorMessage(null);
+    try {
+      await surveyApi.deleteSurvey(surveyId);
+      setActionSuccess(`Survey SRV-${surveyId} unassigned successfully. Loss notification returned to pending list.`);
+      await loadData();
+    } catch (err) {
+      console.error('Failed to unassign survey:', err);
+      setErrorMessage(err.message || 'Failed to unassign survey.');
     } finally {
       setLoading(false);
     }
@@ -456,12 +475,23 @@ export default function SurveyManagement({ user }) {
                     <td style={{ padding: '12px 14px' }}>
                       <div style={{ display: 'flex', gap: 6 }}>
                         {s.status === 'In Progress' && (
-                          <button
-                            onClick={() => { setSelectedSurvey(s); setActiveTab('submit'); }}
-                            style={{ fontSize: 12, color: '#1B5E8A', background: 'none', border: '1px solid #1B5E8A', padding: '4px 8px', borderRadius: 6, cursor: 'pointer', fontWeight: 600 }}
-                          >
-                            Submit Assessment
-                          </button>
+                          <>
+                            <button
+                              onClick={() => { setSelectedSurvey(s); setActiveTab('submit'); }}
+                              style={{ fontSize: 12, color: '#1B5E8A', background: 'none', border: '1px solid #1B5E8A', padding: '4px 8px', borderRadius: 6, cursor: 'pointer', fontWeight: 600 }}
+                            >
+                              Submit Assessment
+                            </button>
+                            {canAssign && (
+                              <button
+                                onClick={() => handleUnassignSurvey(s.rawId)}
+                                title="Cancel assignment and return notification to pending list"
+                                style={{ fontSize: 12, color: '#991B1B', background: '#FEE2E2', border: '1px solid #FCA5A5', padding: '4px 8px', borderRadius: 6, cursor: 'pointer', fontWeight: 600 }}
+                              >
+                                Unassign
+                              </button>
+                            )}
+                          </>
                         )}
                         {canAssign && s.status === 'Completed' && (
                           <button
@@ -535,26 +565,27 @@ export default function SurveyManagement({ user }) {
                     <td style={{ padding: '12px 14px', fontSize: 11, color: '#6B7A8D', fontFamily: 'DM Mono, monospace' }}>{l.lat}, {l.lng}</td>
                     <td style={{ padding: '12px 14px' }}>
                       <div style={{ display: 'flex', gap: 6 }}>
-                        <button
-                          onClick={() => handleStartAssessmentFromLoss(l)}
-                          style={{
-                            padding: '6px 12px', borderRadius: 8, background: '#166534', color: 'white',
-                            border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600,
-                            display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap'
-                          }}
-                        >
-                          <ClipboardCheck size={13} /> Conduct Survey
-                        </button>
-                        {canAssign && (
+                        {canAssign ? (
                           <button
                             onClick={() => setAssignModal(l)}
                             style={{
-                              padding: '6px 10px', borderRadius: 8, background: 'white', color: '#1B5E8A',
-                              border: '1px solid #1B5E8A', cursor: 'pointer', fontSize: 12, fontWeight: 600,
-                              display: 'flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap'
+                              padding: '6px 14px', borderRadius: 8, background: '#1B5E8A', color: 'white',
+                              border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700,
+                              display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap'
                             }}
                           >
-                            <User size={13} /> Assign
+                            <User size={13} /> Assign Surveyor
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleStartAssessmentFromLoss(l)}
+                            style={{
+                              padding: '6px 12px', borderRadius: 8, background: '#166534', color: 'white',
+                              border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600,
+                              display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap'
+                            }}
+                          >
+                            <ClipboardCheck size={13} /> Conduct Survey
                           </button>
                         )}
                       </div>

@@ -36,6 +36,15 @@ public class PolicyServiceTest {
     private UserRepository userRepository;
 
     @Mock
+    private com.examly.springapp.repository.FarmerProfileRepository farmerProfileRepository;
+
+    @Mock
+    private com.examly.springapp.repository.LossNotificationRepository lossNotificationRepository;
+
+    @Mock
+    private com.examly.springapp.repository.ClaimRepository claimRepository;
+
+    @Mock
     private AuditService auditService;
 
     @InjectMocks
