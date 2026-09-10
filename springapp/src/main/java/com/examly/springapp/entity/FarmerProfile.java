@@ -17,7 +17,7 @@ public class FarmerProfile {
     private Long id;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id", unique = true, nullable = false)
     private User user;
 
     @Column(name = "aadhaar_number", unique = true, nullable = false)

@@ -20,19 +20,19 @@ export default function FarmerRegistration({ user }) {
   const [errorMessage, setErrorMessage] = useState(null);
 
   const [formData, setFormData] = useState({
-    name: 'Ramesh Kumar',
-    fatherName: 'Suresh Kumar',
-    aadhaarNumber: '555566667777',
-    phone: '9876543210',
-    village: 'Dindori',
-    taluka: 'Nashik',
-    district: 'Nashik',
+    name: '',
+    fatherName: '',
+    aadhaarNumber: '',
+    phone: '',
+    village: '',
+    taluka: '',
+    district: '',
     state: 'Maharashtra',
-    pincode: '422001',
-    landHoldingHectares: '3.5',
-    bankAccountNumber: '987654321012',
-    ifscCode: 'SBIN0001234',
-    bankName: 'State Bank of India',
+    pincode: '',
+    landHoldingHectares: '',
+    bankAccountNumber: '',
+    ifscCode: '',
+    bankName: '',
   });
 
   useEffect(() => {

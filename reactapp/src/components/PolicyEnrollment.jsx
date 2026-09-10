@@ -26,8 +26,8 @@ export default function PolicyEnrollment({ user }) {
   const [selectedCrop, setSelectedCrop] = useState('Paddy');
   const [area, setArea] = useState('2.5');
   const [khasraNumber, setKhasraNumber] = useState('147/A, 148/B');
-  const [district, setDistrict] = useState(user?.district || 'Chennai');
-  const [state, setState] = useState(user?.state || 'Tamil Nadu');
+  const [district, setDistrict] = useState(user?.district || '');
+  const [state, setState] = useState(user?.state || '');
   const [season, setSeason] = useState('KHARIF');
   const [enrolled, setEnrolled] = useState(false);
   const [filter, setFilter] = useState('All');
@@ -35,7 +35,7 @@ export default function PolicyEnrollment({ user }) {
   const [farmersList, setFarmersList] = useState([]);
   const [selectedFarmerId, setSelectedFarmerId] = useState('');
   const [loading, setLoading] = useState(false);
-  const [createdPolicyId, setCreatedPolicyId] = useState('POL-10422');
+  const [createdPolicyId, setCreatedPolicyId] = useState('');
   const [errorMessage, setErrorMessage] = useState(null);
 
   const isFarmer = (user?.role || '').toLowerCase() === 'farmer';
@@ -83,10 +83,10 @@ export default function PolicyEnrollment({ user }) {
           return {
             id: `POL-${p.id}`,
             rawId: p.id,
-            farmer: p.farmerName || (p.farmerId === 2 ? 'Farmer Ramesh' : (isFarmer ? (user?.name || 'Registered Farmer') : `Farmer #${p.farmerId || '1'}`)),
+            farmer: p.farmerName || (isFarmer ? (user?.name || 'Registered Farmer') : `Farmer ID #${p.farmerId || 'N/A'}`),
             crop: p.cropName || 'Paddy',
-            district: p.district || 'Regional District',
-            state: p.state || 'State Jurisdiction',
+            district: p.district || (user?.district || 'District N/A'),
+            state: p.state || (user?.state || 'State N/A'),
             season: `${p.season || 'KHARIF'} ${p.cropYear || 2026}`,
             area: `${areaVal} Ha`,
             sumInsured: `₹${Number(sumVal).toLocaleString()}`,
@@ -237,7 +237,7 @@ export default function PolicyEnrollment({ user }) {
                     {isFarmer ? 'Farmer Beneficiary' : 'Select Farmer Beneficiary *'}
                   </label>
                   {isFarmer ? (
-                    <input value={user?.name || 'Farmer Ramesh'} disabled style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1.5px solid #E2E8F0', fontSize: 14, background: '#F8FAFC', color: '#6B7A8D' }} />
+                    <input value={user?.name || 'Registered Farmer'} disabled style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1.5px solid #E2E8F0', fontSize: 14, background: '#F8FAFC', color: '#6B7A8D' }} />
                   ) : (
                     <select
                       value={selectedFarmerId}
@@ -249,7 +249,7 @@ export default function PolicyEnrollment({ user }) {
                           <option key={f.id} value={f.id}>{f.name} ({f.phoneNumber || f.email || `ID #${f.id}`})</option>
                         ))
                       ) : (
-                        <option value="2">Farmer Ramesh (9876543210)</option>
+                        <option value="">-- No registered farmers available --</option>
                       )}
                     </select>
                   )}

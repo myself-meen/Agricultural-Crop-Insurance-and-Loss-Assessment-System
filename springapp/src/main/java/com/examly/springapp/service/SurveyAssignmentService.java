@@ -27,6 +27,10 @@ public class SurveyAssignmentService {
         User surveyor = userRepository.findById(surveyorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Surveyor user not found with ID: " + surveyorId));
 
+        if (surveyor.getRole() != Role.SURVEYOR && surveyor.getRole() != Role.ADMIN) {
+            throw new IllegalArgumentException("User ID " + surveyorId + " does not have SURVEYOR role.");
+        }
+
         SurveyAssignment assignment = surveyAssignmentRepository.findByNotificationId(notificationId)
                 .orElse(new SurveyAssignment());
 

@@ -46,10 +46,12 @@ public class ClaimService {
         BigDecimal claimedAmount = policy.getSumInsured().multiply(lossPct)
                 .divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
 
-        // Fetch bank details from farmer profile (graceful fallback for testing)
+        // Fetch bank details from farmer profile
         FarmerProfile profile = farmerProfileRepository.findByUserId(policy.getFarmer().getId()).orElse(null);
-        String bankAcc = (profile != null && profile.getBankAccountNo() != null) ? profile.getBankAccountNo() : "987654321098";
-        String ifsc = (profile != null && profile.getIfscCode() != null) ? profile.getIfscCode() : "SBIN0001234";
+        String bankAcc = (profile != null && profile.getBankAccountNo() != null && !profile.getBankAccountNo().isBlank()) 
+                ? profile.getBankAccountNo() : null;
+        String ifsc = (profile != null && profile.getIfscCode() != null && !profile.getIfscCode().isBlank()) 
+                ? profile.getIfscCode() : null;
 
         Claim claim = new Claim();
         claim.setPolicy(policy);
@@ -74,11 +76,12 @@ public class ClaimService {
 
         User officer = null;
         if (officerId != null) {
-            officer = userRepository.findById(officerId).orElse(null);
-        }
-        if (officer == null) {
+            officer = userRepository.findById(officerId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Approving officer not found with ID: " + officerId));
+        } else {
             officer = userRepository.findByRole(Role.INSURER).stream().findFirst()
-                    .orElseGet(() -> userRepository.findAll().stream().findFirst().orElse(null));
+                    .orElseGet(() -> userRepository.findByRole(Role.ADMIN).stream().findFirst()
+                            .orElseThrow(() -> new ResourceNotFoundException("No insurance or administrative officer found to approve claim")));
         }
 
         claim.setLevel1Approver(officer);
@@ -88,7 +91,7 @@ public class ClaimService {
 
         Claim saved = claimRepository.save(claim);
 
-        Long logUserId = officer != null ? officer.getId() : (claim.getPolicy() != null && claim.getPolicy().getFarmer() != null ? claim.getPolicy().getFarmer().getId() : 1L);
+        Long logUserId = officer.getId();
         auditService.logAction(logUserId, "CLAIM_LEVEL1_APPROVED", "CLAIM", saved.getId(),
                 "Level 1 approval completed for claim ID: " + claimId, "127.0.0.1");
 
@@ -101,11 +104,12 @@ public class ClaimService {
 
         User officer = null;
         if (officerId != null) {
-            officer = userRepository.findById(officerId).orElse(null);
-        }
-        if (officer == null) {
+            officer = userRepository.findById(officerId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Approving officer not found with ID: " + officerId));
+        } else {
             officer = userRepository.findByRole(Role.INSURER).stream().findFirst()
-                    .orElseGet(() -> userRepository.findAll().stream().findFirst().orElse(null));
+                    .orElseGet(() -> userRepository.findByRole(Role.ADMIN).stream().findFirst()
+                            .orElseThrow(() -> new ResourceNotFoundException("No insurance or administrative officer found to approve claim")));
         }
 
         claim.setLevel2Approver(officer);
@@ -115,7 +119,7 @@ public class ClaimService {
 
         Claim saved = claimRepository.save(claim);
 
-        Long logUserId = officer != null ? officer.getId() : (claim.getPolicy() != null && claim.getPolicy().getFarmer() != null ? claim.getPolicy().getFarmer().getId() : 1L);
+        Long logUserId = officer.getId();
         auditService.logAction(logUserId, "CLAIM_LEVEL2_APPROVED", "CLAIM", saved.getId(),
                 "Level 2 final approval completed for claim ID: " + claimId, "127.0.0.1");
 

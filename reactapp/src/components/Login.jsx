@@ -15,10 +15,10 @@ export const DEMO_CREDENTIALS = [
 export default function Login({ onLogin }) {
   const { login } = useAuth();
   const [activeTab, setActiveTab] = useState('login'); // 'login' | 'register'
-  const [userId, setUserId] = useState('ramesh@farmer.in');
-  const [password, setPassword] = useState('Farmer@123');
+  const [userId, setUserId] = useState('');
+  const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
-  const [selectedRole, setSelectedRole] = useState('farmer');
+  const [selectedRole, setSelectedRole] = useState(null);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
 

@@ -2,6 +2,7 @@ package com.examly.springapp.security;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
@@ -14,10 +15,15 @@ import java.util.function.Function;
 @Component
 public class JwtUtil {
 
-    private static final String SECRET = "CropInsuranceSecretKeyForJwtTokenGeneration2026WithHS256AlgorithmMustBe256BitsLong";
+    private final String secret;
+    private final Key key;
     private static final long EXPIRATION_TIME = 86400000; // 24 hours in milliseconds
 
-    private final Key key = Keys.hmacShaKeyFor(SECRET.getBytes());
+    public JwtUtil(@Value("${jwt.secret:CropInsuranceSecretKeyForJwtTokenGeneration2026WithHS256AlgorithmMustBe256BitsLong}") String secret) {
+        this.secret = secret;
+        this.key = Keys.hmacShaKeyFor(secret.getBytes());
+    }
+
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);

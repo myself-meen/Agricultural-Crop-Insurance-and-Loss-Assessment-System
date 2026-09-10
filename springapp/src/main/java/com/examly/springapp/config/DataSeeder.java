@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -19,8 +20,16 @@ public class DataSeeder implements CommandLineRunner {
     private final PasswordEncoder passwordEncoder;
     private final JdbcTemplate jdbcTemplate;
 
+    @Value("${app.seed.enabled:true}")
+    private boolean seedEnabled;
+
     @Override
     public void run(String... args) throws Exception {
+        if (!seedEnabled) {
+            System.out.println("ℹ️ Database seeding is disabled via app.seed.enabled configuration.");
+            return;
+        }
+
         try {
             // Drop outdated Hibernate check constraints in PostgreSQL so any entity enum state transitions work smoothly
             jdbcTemplate.execute("ALTER TABLE IF EXISTS loss_notifications DROP CONSTRAINT IF EXISTS loss_notifications_status_check");

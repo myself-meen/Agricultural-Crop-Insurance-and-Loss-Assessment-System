@@ -1,5 +1,6 @@
 package com.examly.springapp.audit;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.Cipher;
@@ -11,12 +12,21 @@ import java.util.Base64;
 public class EncryptionUtil {
 
     private static final String ALGORITHM = "AES";
-    private static final byte[] KEY = "CropInsuranceKey".getBytes(StandardCharsets.UTF_8); // 16 bytes key for AES-128
+    private final byte[] key;
+
+    public EncryptionUtil(@Value("${encryption.aes.key:CropInsuranceKey}") String rawKey) {
+        // Ensure 16-byte key alignment for AES-128
+        byte[] keyBytes = rawKey.getBytes(StandardCharsets.UTF_8);
+        byte[] finalKey = new byte[16];
+        System.arraycopy(keyBytes, 0, finalKey, 0, Math.min(keyBytes.length, 16));
+        this.key = finalKey;
+    }
+
 
     public String encrypt(String value) {
         if (value == null) return null;
         try {
-            SecretKeySpec secretKey = new SecretKeySpec(KEY, ALGORITHM);
+            SecretKeySpec secretKey = new SecretKeySpec(this.key, ALGORITHM);
             Cipher cipher = Cipher.getInstance(ALGORITHM);
             cipher.init(Cipher.ENCRYPT_MODE, secretKey);
             byte[] encrypted = cipher.doFinal(value.getBytes(StandardCharsets.UTF_8));
@@ -29,7 +39,7 @@ public class EncryptionUtil {
     public String decrypt(String encryptedValue) {
         if (encryptedValue == null) return null;
         try {
-            SecretKeySpec secretKey = new SecretKeySpec(KEY, ALGORITHM);
+            SecretKeySpec secretKey = new SecretKeySpec(this.key, ALGORITHM);
             Cipher cipher = Cipher.getInstance(ALGORITHM);
             cipher.init(Cipher.DECRYPT_MODE, secretKey);
             byte[] decoded = Base64.getDecoder().decode(encryptedValue);
